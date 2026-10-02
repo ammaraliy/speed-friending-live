@@ -803,7 +803,26 @@ function tickCountdown(){
     if(m==="round")endRoundNow(); else if(m==="trans"&&ev.settings.autostart)startRoundNow(); else if(m==="break"){toast("Break's over.");}
   }
 }
-function drawQR(id,text,size){ const el=document.getElementById(id); if(el&&window.QRCode){ QRCode.toCanvas(el,text,{width:size,margin:1,color:{dark:"#2B2430",light:"#ffffff"}},()=>{}); } }
+function drawQR(id,text,size){
+  const el=document.getElementById(id); if(!el) return;
+  // Fast path: use the QR library if it loaded and this is still a canvas.
+  if(window.QRCode && QRCode.toCanvas && el.tagName==="CANVAS"){
+    QRCode.toCanvas(el,text,{width:size,margin:1,color:{dark:"#2B2430",light:"#ffffff"}},function(err){ if(err) imgFallback(); });
+    return;
+  }
+  imgFallback();
+  function imgFallback(){
+    // Library missing/blocked → fetch the QR as an image (with a backup source).
+    const img=document.createElement("img");
+    img.width=size; img.height=size; img.alt="Join QR code";
+    img.style.cssText="border-radius:8px;display:block;background:#fff;";
+    const primary="https://api.qrserver.com/v1/create-qr-code/?size="+size+"x"+size+"&margin=0&data="+encodeURIComponent(text);
+    const backup="https://quickchart.io/qr?size="+size+"&margin=1&text="+encodeURIComponent(text);
+    img.onerror=function(){ img.onerror=null; img.src=backup; };
+    img.src=primary;
+    const cur=document.getElementById(id); (cur||el).replaceWith(img);
+  }
+}
 function tickClock(){ const c=$("#clock"); if(c)c.textContent=new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}); }
 
 boot();
