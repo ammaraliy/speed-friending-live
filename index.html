@@ -122,7 +122,10 @@
   .att-hero::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 100% 0%,rgba(225,75,106,.25),transparent 55%);}
   .att-hero>*{position:relative;z-index:1;}
   .att-round{font-family:"Baloo 2";font-weight:800;font-size:15px;color:var(--gold);margin-bottom:6px;}
-  .att-table{font-family:"Baloo 2";font-weight:800;font-size:clamp(40px,13vw,60px);letter-spacing:-.02em;line-height:1;}
+  .att-table{font-family:"Baloo 2";font-weight:800;font-size:clamp(54px,18vw,92px);letter-spacing:-.02em;line-height:1;}
+  .att-hero.color{min-height:46vh;display:flex;flex-direction:column;justify-content:center;text-align:center;}
+  .att-hero.color .att-round{font-size:18px;}
+  .att-hero.color .att-cd{font-size:20px;}
   .att-cd{font-variant-numeric:tabular-nums;font-weight:700;font-size:18px;color:#cfc7d4;margin-top:10px;}
   .att-q{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:18px;margin-top:18px;}
   .att-q .k{font-size:12.5px;font-weight:700;color:var(--gold);margin-bottom:6px;}
@@ -142,6 +145,13 @@
   .overlay .sheet{background:#fff;border-radius:22px;padding:26px;max-width:360px;width:100%;text-align:center;}
   .overlay canvas{background:#fff;padding:8px;border-radius:12px;}
   .hidden{display:none!important;}
+  .sheet.wide{max-width:430px;text-align:left;}
+  .sheet.wide h3{text-align:left;}
+  .starter-cats{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 14px;}
+  .starter-cats button{border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:7px 12px;font-weight:600;font-size:13px;color:var(--ink);}
+  .starter-cats button.active{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .starter-qs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px;max-height:48vh;overflow:auto;}
+  .starter-qs li{background:#F7F4EF;border:1px solid var(--line);border-radius:12px;padding:11px 13px;font-size:15px;line-height:1.3;}
 </style>
 </head>
 <body>
@@ -190,6 +200,17 @@ const SUPABASE_ANON_KEY = "YOUR-ANON-KEY";</pre></div>
             <label class="field"><span>Round length <small>(min)</small></span><input type="number" id="s_round" min="1" max="60" value="12" /></label>
             <label class="field"><span>Move time <small>(sec)</small></span><input type="number" id="s_trans" min="10" max="600" value="90" /></label>
           </div>
+          <label class="field"><span>Group size <small>— you choose how people pair up</small></span>
+            <select id="s_groupsize">
+              <option value="auto">Auto — 4s with a few 3s (recommended)</option>
+              <option value="pairs">Pairs — 1-on-1</option>
+              <option value="threes">Groups of 3</option>
+              <option value="fours">Groups of 4</option>
+            </select>
+          </label>
+          <label class="field"><span>Your Instagram <small>(optional — shown to guests at breaks & the end)</small></span>
+            <input type="text" id="s_insta" placeholder="https://www.instagram.com/yourhandle/" />
+          </label>
         </div>
         <div class="card">
           <div class="section-title">Breaks & flow</div>
@@ -202,13 +223,8 @@ const SUPABASE_ANON_KEY = "YOUR-ANON-KEY";</pre></div>
         </div>
       </div>
       <div class="card">
-        <div class="section-title">Conversation prompts</div>
-        <div class="row" style="margin-top:8px;">
-          <label class="field"><span>Prompt mode</span>
-            <select id="s_qmode"><option value="auto">Auto — light → deep</option><option value="cat">Pick a category</option></select>
-          </label>
-          <label class="field" id="catWrap" style="display:none;"><span>Category</span><select id="s_qcat"></select></label>
-        </div>
+        <div class="section-title">Conversation starters</div>
+        <p class="sub" style="margin:4px 0 12px;">No forced question each round. Instead, people tap <b>“Need something to talk about?”</b> on their phone and browse your question bank by category, picking whatever they like. These toggles control which questions show up there.</p>
         <div class="row">
           <label class="toggle"><input type="checkbox" id="s_teen" /><span>Include school/teen questions</span></label>
           <label class="toggle"><input type="checkbox" id="s_spicy" /><span>Include dating-ish questions</span></label>
@@ -229,6 +245,7 @@ const SUPABASE_ANON_KEY = "YOUR-ANON-KEY";</pre></div>
         <div class="section-title">Add someone without a phone</div>
         <div class="row" style="align-items:flex-end;margin-top:8px;">
           <label class="field" style="margin-bottom:0;flex:2;"><span>Name</span><input type="text" id="p_name" placeholder="Name" autocomplete="off" /></label>
+          <label class="field" style="margin-bottom:0;"><span>Country</span><select id="p_country"></select></label>
           <label class="field" style="margin-bottom:0;"><span>Came with</span><input type="text" id="p_with" placeholder="optional" autocomplete="off" /></label>
           <button class="btn" id="addPerson" style="flex:none;">Add</button>
         </div>
@@ -253,7 +270,20 @@ const SUPABASE_ANON_KEY = "YOUR-ANON-KEY";</pre></div>
       <h2 class="head">Dashboard</h2>
       <p class="sub">Your private view. See who has tapped in at their table this round, hand out breaks, and watch connections grow.</p>
       <div class="stat-row" id="stats"></div>
-      <div class="card" style="margin-top:16px;">
+      <div id="waitingCard" style="margin-top:16px;"></div>
+      <div class="card" id="dashJoinCard" style="margin-top:16px;">
+        <div class="section-title">Join QR — for latecomers</div>
+        <p class="sub" style="margin:4px 0 12px;">Show this any time so new people can hop in, even after rounds have started.</p>
+        <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;">
+          <canvas id="qrDash"></canvas>
+          <div>
+            <div class="joincode" id="dashJoinCode" style="color:var(--berry-ink);font-size:34px;">----</div>
+            <div id="dashJoinUrl" style="word-break:break-all;color:var(--muted);font-size:13px;"></div>
+            <button class="btn ghost sm" style="margin-top:10px;" onclick="showJoinQR()">Show big for projector</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
         <div class="section-title">People <span id="dashCount" style="color:var(--ink)"></span></div>
         <p class="sub" style="margin:4px 0 0;">A <span class="pill teal" style="padding:1px 7px">✓ here</span> means they tapped in at their table this round. Tap a name to mark away/back.</p>
         <div class="roster" id="dashRoster"></div>
@@ -265,6 +295,9 @@ const SUPABASE_ANON_KEY = "YOUR-ANON-KEY";</pre></div>
           <label class="field"><span>Move (sec)</span><input type="number" id="d_trans" min="10" max="600" /></label>
           <label class="field"><span>Break every</span><input type="number" id="d_breakevery" min="0" max="20" /></label>
           <label class="field"><span>Break (min)</span><input type="number" id="d_breaklen" min="1" max="60" /></label>
+          <label class="field"><span>Group size</span>
+            <select id="d_groupsize"><option value="auto">Auto (3–4)</option><option value="pairs">Pairs</option><option value="threes">Threes</option><option value="fours">Fours</option></select>
+          </label>
         </div>
         <button class="btn ghost sm" id="d_saveSettings">Save settings</button>
       </div>
@@ -333,6 +366,18 @@ const QUESTIONS=[
   {t:"Travel & Places",d:1,q:"You won a trip for you and two people. Who would you take, and why?"},
   {t:"Travel & Places",d:2,q:"Where were you born? Where else have you lived? Which place was your favorite?"},
   {t:"Travel & Places",d:2,q:"What part of the world would you like to explore next?"},
+  {t:"From Home",d:1,q:"Teach the group one word or phrase in your language."},
+  {t:"From Home",d:1,q:"What's a food from home you miss the most?"},
+  {t:"From Home",d:1,q:"If I had one day in your hometown, what's the one thing you'd make me do?"},
+  {t:"From Home",d:1,q:"What tradition or festival from your country do you wish was celebrated here?"},
+  {t:"From Home",d:1,q:"How do people greet each other where you're from?"},
+  {t:"From Home",d:2,q:"What surprised you most when you first arrived here?"},
+  {t:"From Home",d:1,q:"Name a stereotype about your country that's actually true — and one that's totally false."},
+  {t:"From Home",d:1,q:"What's a song almost everyone from your country knows?"},
+  {t:"From Home",d:2,q:"What's a word in your language that doesn't really translate into English?"},
+  {t:"From Home",d:1,q:"What's the most beautiful place in your home country?"},
+  {t:"From Home",d:2,q:"What's the biggest difference between daily life here and back home?"},
+  {t:"From Home",d:2,q:"What do people most often get wrong about your country?"},
   {t:"Memories & Your Story",d:1,q:"What's the worst gift you ever received? Who was it from?"},
   {t:"Memories & Your Story",d:2,q:"Name a gift you'll never forget."},
   {t:"Memories & Your Story",d:1,q:"What was the best thing that happened to you this past week?"},
@@ -385,6 +430,50 @@ const COLORS=[
 function wf(){return (ev&&ev.settings&&ev.settings.wayfind)||"colors";}
 function spotFor(n){ if(wf()!=="colors")return null; return COLORS[(n-1)%COLORS.length]; }
 
+/* ---------- countries (ISO code + name; flag is derived from the code) ---------- */
+const COUNTRIES=[
+ ["AF","Afghanistan"],["AL","Albania"],["DZ","Algeria"],["AD","Andorra"],["AO","Angola"],["AG","Antigua & Barbuda"],
+ ["AR","Argentina"],["AM","Armenia"],["AU","Australia"],["AT","Austria"],["AZ","Azerbaijan"],["BS","Bahamas"],
+ ["BH","Bahrain"],["BD","Bangladesh"],["BB","Barbados"],["BY","Belarus"],["BE","Belgium"],["BZ","Belize"],
+ ["BJ","Benin"],["BT","Bhutan"],["BO","Bolivia"],["BA","Bosnia & Herzegovina"],["BW","Botswana"],["BR","Brazil"],
+ ["BN","Brunei"],["BG","Bulgaria"],["BF","Burkina Faso"],["BI","Burundi"],["KH","Cambodia"],["CM","Cameroon"],
+ ["CA","Canada"],["CV","Cape Verde"],["CF","Central African Republic"],["TD","Chad"],["CL","Chile"],["CN","China"],
+ ["CO","Colombia"],["KM","Comoros"],["CG","Congo"],["CD","Congo (DRC)"],["CR","Costa Rica"],["CI","Côte d'Ivoire"],
+ ["HR","Croatia"],["CU","Cuba"],["CY","Cyprus"],["CZ","Czechia"],["DK","Denmark"],["DJ","Djibouti"],
+ ["DM","Dominica"],["DO","Dominican Republic"],["EC","Ecuador"],["EG","Egypt"],["SV","El Salvador"],["GQ","Equatorial Guinea"],
+ ["ER","Eritrea"],["EE","Estonia"],["SZ","Eswatini"],["ET","Ethiopia"],["FJ","Fiji"],["FI","Finland"],
+ ["FR","France"],["GA","Gabon"],["GM","Gambia"],["GE","Georgia"],["DE","Germany"],["GH","Ghana"],
+ ["GR","Greece"],["GD","Grenada"],["GT","Guatemala"],["GN","Guinea"],["GW","Guinea-Bissau"],["GY","Guyana"],
+ ["HT","Haiti"],["HN","Honduras"],["HU","Hungary"],["IS","Iceland"],["IN","India"],["ID","Indonesia"],
+ ["IR","Iran"],["IQ","Iraq"],["IE","Ireland"],["IL","Israel"],["IT","Italy"],["JM","Jamaica"],
+ ["JP","Japan"],["JO","Jordan"],["KZ","Kazakhstan"],["KE","Kenya"],["KI","Kiribati"],["KW","Kuwait"],
+ ["KG","Kyrgyzstan"],["LA","Laos"],["LV","Latvia"],["LB","Lebanon"],["LS","Lesotho"],["LR","Liberia"],
+ ["LY","Libya"],["LI","Liechtenstein"],["LT","Lithuania"],["LU","Luxembourg"],["MG","Madagascar"],["MW","Malawi"],
+ ["MY","Malaysia"],["MV","Maldives"],["ML","Mali"],["MT","Malta"],["MH","Marshall Islands"],["MR","Mauritania"],
+ ["MU","Mauritius"],["MX","Mexico"],["FM","Micronesia"],["MD","Moldova"],["MC","Monaco"],["MN","Mongolia"],
+ ["ME","Montenegro"],["MA","Morocco"],["MZ","Mozambique"],["MM","Myanmar"],["NA","Namibia"],["NR","Nauru"],
+ ["NP","Nepal"],["NL","Netherlands"],["NZ","New Zealand"],["NI","Nicaragua"],["NE","Niger"],["NG","Nigeria"],
+ ["KP","North Korea"],["MK","North Macedonia"],["NO","Norway"],["OM","Oman"],["PK","Pakistan"],["PW","Palau"],
+ ["PS","Palestine"],["PA","Panama"],["PG","Papua New Guinea"],["PY","Paraguay"],["PE","Peru"],["PH","Philippines"],
+ ["PL","Poland"],["PT","Portugal"],["QA","Qatar"],["RO","Romania"],["RU","Russia"],["RW","Rwanda"],
+ ["KN","Saint Kitts & Nevis"],["LC","Saint Lucia"],["VC","Saint Vincent"],["WS","Samoa"],["SM","San Marino"],["ST","São Tomé & Príncipe"],
+ ["SA","Saudi Arabia"],["SN","Senegal"],["RS","Serbia"],["SC","Seychelles"],["SL","Sierra Leone"],["SG","Singapore"],
+ ["SK","Slovakia"],["SI","Slovenia"],["SB","Solomon Islands"],["SO","Somalia"],["ZA","South Africa"],["KR","South Korea"],
+ ["SS","South Sudan"],["ES","Spain"],["LK","Sri Lanka"],["SD","Sudan"],["SR","Suriname"],["SE","Sweden"],
+ ["CH","Switzerland"],["SY","Syria"],["TW","Taiwan"],["TJ","Tajikistan"],["TZ","Tanzania"],["TH","Thailand"],
+ ["TL","Timor-Leste"],["TG","Togo"],["TO","Tonga"],["TT","Trinidad & Tobago"],["TN","Tunisia"],["TR","Türkiye"],
+ ["TM","Turkmenistan"],["TV","Tuvalu"],["UG","Uganda"],["UA","Ukraine"],["AE","United Arab Emirates"],["GB","United Kingdom"],
+ ["US","United States"],["UY","Uruguay"],["UZ","Uzbekistan"],["VU","Vanuatu"],["VA","Vatican City"],["VE","Venezuela"],
+ ["VN","Vietnam"],["YE","Yemen"],["ZM","Zambia"],["ZW","Zimbabwe"]
+];
+const COUNTRY_MAP=Object.fromEntries(COUNTRIES);
+function flagEmoji(cc){ if(!cc||cc.length!==2)return ""; return cc.toUpperCase().replace(/./g,ch=>String.fromCodePoint(127397+ch.charCodeAt(0))); }
+function countryName(cc){ return COUNTRY_MAP[cc]||cc||""; }
+function countryOptions(selected){
+  return `<option value="" disabled ${selected?"":"selected"}>Select country…</option>`+
+    COUNTRIES.map(([c,n])=>`<option value="${c}" ${c===selected?"selected":""}>${flagEmoji(c)} ${esc(n)}</option>`).join("");
+}
+
 /* ---------- helpers ---------- */
 const $=s=>document.querySelector(s);
 const AVATARS=["#E14B6A","#2FA098","#F2B441","#6C7BE0","#E07A4B","#8E63C4","#3AAE6B","#D45C93"];
@@ -399,18 +488,28 @@ let toastTimer;function toast(m){const t=$("#toast");t.textContent=m;t.classList
 function cfgOk(){return !SUPABASE_URL.includes("YOUR-")&&!SUPABASE_ANON_KEY.includes("YOUR-");}
 
 /* ---------- matching (same core as Phase 1) ---------- */
-function splitSizes(n){
+function splitSizesAuto(n){
   if(n<=0)return[];if(n<3)return[n];
   for(let f=Math.floor(n/4);f>=0;f--){const rem=n-4*f;if(rem%3===0)return[...Array(f).fill(4),...Array(rem/3).fill(3)];}
-  const rest=splitSizes(n-2);return rest.length?[2,...rest]:[n];
+  const rest=splitSizesAuto(n-2);return rest.length?[2,...rest]:[n];
+}
+function splitSizes(n,pref){
+  pref=pref||"auto";
+  if(n<=0)return[];
+  if(pref==="auto")return splitSizesAuto(n);
+  const k=pref==="pairs"?2:pref==="threes"?3:4;
+  if(n<k)return[n];
+  let g=Math.floor(n/k),rem=n-g*k;const sizes=Array(g).fill(k);
+  if(rem===1){ sizes[0]+=1; } else if(rem>1){ sizes.push(rem); }
+  return sizes;
 }
 function pairCost(a,b,byId,met){
   const pa=byId[a],pb=byId[b];
   if(pa.came_with&&pb.came_with&&pa.came_with.trim().toLowerCase()===pb.came_with.trim().toLowerCase())return 1000;
   return (met[pkey(a,b)]||0)*10;
 }
-function buildAssignment(ids,byId,met){
-  const sizes=splitSizes(ids.length);let best=null,bc=Infinity;
+function buildAssignment(ids,byId,met,pref){
+  const sizes=splitSizes(ids.length,pref);let best=null,bc=Infinity;
   for(let att=0;att<60;att++){
     const order=shuffle(ids),groups=sizes.map(s=>({size:s,m:[]})),rem=[...order];
     for(const g of groups){g.m.push(rem.shift());
@@ -422,23 +521,6 @@ function buildAssignment(ids,byId,met){
     if(cost<bc){bc=cost;best=tbls;}if(cost===0)break;
   }
   return best||[];
-}
-
-/* ---------- question picking (organizer only) ---------- */
-function pickQuestion(ev,forRound,closing){
-  const st=ev.settings, used=ev.used_q||[];
-  const filt=(relax)=>QUESTIONS.map((q,i)=>({q,i})).filter(({q,i})=>{
-    if(used.includes(i))return false;
-    if(closing)return !!q.closing; if(q.closing)return false;
-    if(q.teen&&!st.teen)return false; if(q.spicy&&!st.spicy)return false;
-    if(!relax){
-      if(st.qmode==="cat"&&q.t!==st.qcat)return false;
-      if(st.qmode==="auto"){const tgt=forRound<=2?1:forRound<=4?2:3;if(q.d!==tgt)return false;}
-    } return true;
-  });
-  let pool=filt(false); if(!pool.length)pool=filt(true);
-  if(!pool.length){ev.used_q=[];return pickQuestion(ev,forRound,closing);}
-  const ch=pool[(Math.random()*pool.length)|0]; ev.used_q=[...used,ch.i]; return ch.i;
 }
 
 /* ============================================================
@@ -482,23 +564,23 @@ function subscribeOrg(){
 async function pushEvent(patch){ Object.assign(ev,patch); await sb.from("events").update(patch).eq("id",ev.id); }
 
 function initSetupForm(){
-  const cat=$("#s_qcat"); cat.innerHTML=CATEGORIES.map(c=>`<option>${c}</option>`).join("");
-  $("#s_qmode").addEventListener("change",e=>$("#catWrap").style.display=e.target.value==="cat"?"block":"none");
+  $("#s_insta").value="https://www.instagram.com/ammaaraly/";
+  $("#p_country").innerHTML=countryOptions();
 }
 function readSettings(){
   return {name:$("#s_name").value.trim(),round:+$("#s_round").value||12,trans:+$("#s_trans").value||90,
     breakEvery:+$("#s_breakevery").value||0,breakLen:+$("#s_breaklen").value||10,autostart:$("#s_autostart").checked,
-    qmode:$("#s_qmode").value,qcat:$("#s_qcat").value,teen:$("#s_teen").checked,spicy:$("#s_spicy").checked,closing:$("#s_closing").checked,
-    wayfind:$("#s_wayfind").value};
+    teen:$("#s_teen").checked,spicy:$("#s_spicy").checked,closing:$("#s_closing").checked,
+    wayfind:$("#s_wayfind").value,groupSize:$("#s_groupsize").value,instagram:$("#s_insta").value.trim()};
 }
 function wireOrg(){
   $("#tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-tab]");if(b)switchTab(b.dataset.tab);});
   $("#createEvent").onclick=createEvent;
   $("#newEvent").onclick=()=>{ if(confirm("Start a brand-new event? The current one stays saved in your database but you'll leave it.")){ localStorage.removeItem("sf_org"); location.href=location.pathname; } };
-  $("#addPerson").onclick=()=>addPerson($("#p_name"),$("#p_with"));
-  $("#p_name").addEventListener("keydown",e=>{if(e.key==="Enter")addPerson($("#p_name"),$("#p_with"));});
+  $("#addPerson").onclick=()=>addPerson($("#p_name"),$("#p_with"),$("#p_country"));
+  $("#p_name").addEventListener("keydown",e=>{if(e.key==="Enter")addPerson($("#p_name"),$("#p_with"),$("#p_country"));});
   $("#startEvent").onclick=lockAndStart;
-  $("#d_saveSettings").onclick=async()=>{ const s={...ev.settings,round:+$("#d_round").value||ev.settings.round,trans:+$("#d_trans").value||ev.settings.trans,breakEvery:+$("#d_breakevery").value,breakLen:+$("#d_breaklen").value||ev.settings.breakLen}; await pushEvent({settings:s}); toast("Settings updated."); };
+  $("#d_saveSettings").onclick=async()=>{ const s={...ev.settings,round:+$("#d_round").value||ev.settings.round,trans:+$("#d_trans").value||ev.settings.trans,breakEvery:+$("#d_breakevery").value,breakLen:+$("#d_breaklen").value||ev.settings.breakLen,groupSize:$("#d_groupsize").value}; await pushEvent({settings:s}); toast("Settings updated."); };
   $("#d_reset").onclick=()=>{ if(confirm("End this event and start fresh?")){ localStorage.removeItem("sf_org"); location.href=location.pathname; } };
 }
 async function createEvent(){
@@ -512,10 +594,11 @@ async function createEvent(){
   $("#newEvent").style.display="inline"; subscribeOrg(); switchTab("room"); renderOrg();
   toast("Event created — project the Room tab.");
 }
-async function addPerson(nameEl,withEl){
+async function addPerson(nameEl,withEl,countryEl){
   const name=nameEl.value.trim(); if(!name){toast("Enter a name.");return;}
-  await sb.from("attendees").insert({event_id:ev.id,name,came_with:withEl.value.trim(),self_joined:false});
-  nameEl.value="";withEl.value="";nameEl.focus();
+  const country=countryEl?countryEl.value:"";
+  await sb.from("attendees").insert({event_id:ev.id,name,came_with:withEl.value.trim(),country,self_joined:false});
+  nameEl.value="";withEl.value="";if(countryEl)countryEl.value="";nameEl.focus();
 }
 function poolForRound(roundNum){
   return attendees.filter(a=>!a.away&&(a.on_break_until||0)<roundNum).map(a=>a.id);
@@ -529,11 +612,10 @@ async function nextRound(){
   const roundNum=(ev.round||0)+1;
   const pool=poolForRound(roundNum);
   if(pool.length<2){toast("Not enough people present.");return;}
-  const assignment=buildAssignment(pool,byId,ev.met||{});
-  const qIndex=pickQuestion(ev,roundNum,false);
-  const tables=assignment.map((members,i)=>({n:i+1,members,qIndex}));
+  const assignment=buildAssignment(pool,byId,ev.met||{},ev.settings.groupSize);
+  const tables=assignment.map((members,i)=>({n:i+1,members}));
   const timer={mode:"trans",endsAt:Date.now()+ev.settings.trans*1000,running:true,remaining:ev.settings.trans};
-  await pushEvent({round:roundNum,tables,phase:"transition",timer,used_q:ev.used_q});
+  await pushEvent({round:roundNum,tables,phase:"transition",timer,reflection:false});
   renderOrg();
 }
 async function startRoundNow(){
@@ -554,20 +636,21 @@ async function startBreak(){
 async function endBreak(){ await nextRound(); }
 async function endEvent(){
   if(ev.settings.closing){
-    const qIndex=pickQuestion(ev,ev.round,true);
-    const tables=ev.tables.map(t=>({...t,qIndex}));
     const timer={mode:"round",endsAt:Date.now()+ev.settings.round*1000*60,running:true,remaining:ev.settings.round*60};
-    await pushEvent({tables,phase:"running",timer,settings:{...ev.settings,closing:false},used_q:ev.used_q});
-    toast("Reflection round — same tables, one last question.");
+    await pushEvent({phase:"running",timer,reflection:true,settings:{...ev.settings,closing:false}});
+    toast("Reflection round — same groups, closing questions.");
   } else { await pushEvent({phase:"ended",timer:{}}); }
   renderOrg();
 }
-async function shuffleQuestion(){
-  const cur=ev.tables[0]?.qIndex;
-  ev.used_q=(ev.used_q||[]).filter(i=>i!==cur);
-  const qIndex=pickQuestion(ev,ev.round,false);
-  const tables=ev.tables.map(t=>({...t,qIndex}));
-  await pushEvent({tables,used_q:ev.used_q}); renderOrg(); toast("New question.");
+/* Seat a latecomer into the current round's smallest group */
+async function addToCurrentRound(attId){
+  if(!ev.tables||!ev.tables.length){ toast("No active round."); return; }
+  let target=ev.tables[0];
+  for(const t of ev.tables){ if(t.members.length<target.members.length) target=t; }
+  const met={...(ev.met||{})};
+  if(ev.phase==="running"){ for(const m of target.members){ const k=pkey(attId,m); met[k]=(met[k]||0)+1; } }
+  const tables=ev.tables.map(t=> t===target ? {...t,members:[...t.members,attId]} : t);
+  await pushEvent({tables,met}); toast("Seated in round "+ev.round+".");
 }
 /* timer controls (organizer authority) */
 async function pauseTimer(){ if(!ev.timer.running)return; const rem=Math.max(0,Math.round((ev.timer.endsAt-Date.now())/1000)); await pushEvent({timer:{...ev.timer,running:false,remaining:rem,endsAt:null}}); renderOrg(); }
@@ -591,7 +674,7 @@ function fillSetup(){
   const s=ev.settings;
   $("#s_name").value=s.name||"";$("#s_round").value=s.round;$("#s_trans").value=s.trans;
   $("#s_breakevery").value=s.breakEvery;$("#s_breaklen").value=s.breakLen;$("#s_autostart").checked=s.autostart;
-  $("#s_qmode").value=s.qmode;$("#catWrap").style.display=s.qmode==="cat"?"block":"none";$("#s_qcat").value=s.qcat;
+  $("#s_groupsize").value=s.groupSize||"auto";$("#s_insta").value=s.instagram||"";
   $("#s_teen").checked=s.teen;$("#s_spicy").checked=s.spicy;$("#s_closing").checked=s.closing;
   $("#s_wayfind").value=s.wayfind||"colors";
   $("#createEvent").textContent = ev.phase==="setup" ? "Create event & open doors →" : "Event is live ✓";
@@ -609,7 +692,7 @@ function personRow(p,dash){
   const el=document.createElement("div");el.className="person"+(p.away?" away":"");
   const av=document.createElement("div");av.className="avatar";av.style.background=colorFor(p.id);av.textContent=initials(p.name);
   const meta=document.createElement("div");
-  meta.innerHTML=`<div class="nm">${esc(p.name)}</div>`+(p.came_with?`<div class="with">with “${esc(p.came_with)}”</div>`:"");
+  meta.innerHTML=`<div class="nm">${p.country?flagEmoji(p.country)+' ':''}${esc(p.name)}</div>`+(p.country?`<div class="with">${esc(countryName(p.country))}</div>`:"")+(p.came_with?`<div class="with">with “${esc(p.came_with)}”</div>`:"");
   el.append(av,meta);const sp=document.createElement("div");sp.className="spacer";el.append(sp);
   if(dash){
     const here=(p.tapped_round||0)===ev.round&&ev.phase==="running";
@@ -638,20 +721,20 @@ function renderRoom(){
     return;
   }
   if(ev.phase==="ended"){
-    stage.innerHTML=`<div class="room-empty"><div><div class="big">That's a wrap 🎉</div><div>Go make plans with your new friends.</div></div></div>`;
+    stage.innerHTML=`<div class="room-empty"><div><div class="big">That's a wrap 🎉</div><div>Go make plans with your new friends.</div>${ev.settings.instagram?`<a href="${esc(ev.settings.instagram)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:18px;color:#fff;background:var(--berry);padding:13px 22px;border-radius:12px;font-weight:700;text-decoration:none;">📸 Follow the host · ${esc(instaHandle())}</a>`:""}</div></div>`;
     bar.innerHTML=`<button class="btn ghost" onclick="switchTab('dash')">See the dashboard</button>`;return;
   }
   if(ev.phase==="break"){
     stage.innerHTML=`<div class="room-break"><div><div class="big">Break time ☕</div><div class="cd" data-cd>${fmt(remaining())}</div>
-      <div style="color:#cfc7d4;margin-top:10px;">Back in a few minutes.</div></div></div>`;
+      <div style="color:#cfc7d4;margin-top:10px;">Back in a few minutes.</div>${ev.settings.instagram?`<a href="${esc(ev.settings.instagram)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:16px;color:#fff;background:var(--berry);padding:11px 20px;border-radius:12px;font-weight:700;text-decoration:none;">📸 Follow the host · ${esc(instaHandle())}</a>`:""}</div></div>`;
     bar.innerHTML=timerControls()+`<div class="spacer"></div><button class="btn teal" onclick="endBreak()">End break & start next round</button>`;return;
   }
-  const moving=ev.phase==="transition",q=QUESTIONS[ev.tables[0]?.qIndex];
-  const moveLabel = moving ? (wf()==="colors"?"Move — find your colour":"Move to your next table") : "Round "+ev.round;
+  const moving=ev.phase==="transition";
+  const moveLabel = moving ? (wf()==="colors"?"Move — find your colour":"Move to your next table") : ("Round "+ev.round+(ev.reflection?" · reflection":""));
   stage.innerHTML=`
     <div class="room-top"><div class="round-label">${moveLabel}</div>
       <div class="countdown ${ev.timer.running?'':'paused'}" data-cd>${fmt(remaining())}</div></div>
-    <div class="qcard"><div class="qk">${moving?"Coming up":"Talk about"} · ${q?esc(q.t):""}</div><div class="qt">${q?esc(q.q):""}</div></div>
+    <div class="qcard" style="padding:14px 22px;"><div class="qk">Conversation starters</div><div style="font-size:16px;color:#e9e4ec;line-height:1.3;">Stuck for words? Everyone can tap <b>“Need something to talk about?”</b> on their phone to browse ${ev.reflection?"the closing questions":"questions by category"}.</div></div>
     <div class="tables">${ev.tables.map(t=>{
       const sp=spotFor(t.n), tc=sp?sp.text:null;
       const cardStyle=sp?`style="background:${sp.hex};border-color:rgba(255,255,255,.28);"`:"";
@@ -659,14 +742,14 @@ function renderRoom(){
                    :`<span class="tnum">${t.n}</span> Table ${t.n}`;
       return `<div class="table-card" ${cardStyle}><h4 ${sp?`style="color:${tc}"`:""}>${head}</h4>
         <ul>${t.members.map(id=>{const a=byId[id];const here=(a?.tapped_round||0)===ev.round&&ev.phase==="running";
-          return `<li ${sp?`style="color:${tc}"`:""}>${here?`<span class="tick" ${sp?`style="color:${tc}"`:""}>✓</span>`:`<span class="wait" ${sp?`style="color:${tc};opacity:.6"`:""}>•</span>`} ${esc(a?.name||"?")}</li>`;}).join("")}</ul></div>`;
+          return `<li ${sp?`style="color:${tc}"`:""}>${here?`<span class="tick" ${sp?`style="color:${tc}"`:""}>✓</span>`:`<span class="wait" ${sp?`style="color:${tc};opacity:.6"`:""}>•</span>`} ${a?.country?flagEmoji(a.country)+' ':''}${esc(a?.name||"?")}</li>`;}).join("")}</ul></div>`;
     }).join("")}</div>`;
   if(moving){
     bar.innerHTML=`<div class="grp"><button class="btn primary" onclick="startRoundNow()">▶ Start round ${ev.round}</button>
-      <button class="btn ghost" onclick="shuffleQuestion()">↻ Shuffle question</button></div>
+      <button class="btn ghost sm" onclick="showJoinQR()">Show join QR</button></div>
       <div class="spacer"></div><span class="pill gold">People are moving…</span>`;
   }else{
-    bar.innerHTML=`<div class="grp">${timerControls()}<button class="btn ghost sm" onclick="shuffleQuestion()">↻ Question</button></div>
+    bar.innerHTML=`<div class="grp">${timerControls()}<button class="btn ghost sm" onclick="showJoinQR()">Join QR</button></div>
       <div class="spacer"></div><div class="grp"><button class="btn ghost sm" onclick="startBreak()">Break now</button>
       <button class="btn primary" onclick="endRoundNow()">End round →</button>
       <button class="btn ghost sm" onclick="endEvent()">End event</button></div>`;
@@ -687,6 +770,21 @@ function renderDash(){
   $("#dashCount").textContent="· "+attendees.length+" total";
   $("#d_round").value=ev.settings.round;$("#d_trans").value=ev.settings.trans;
   $("#d_breakevery").value=ev.settings.breakEvery;$("#d_breaklen").value=ev.settings.breakLen;
+  $("#d_groupsize").value=ev.settings.groupSize||"auto";
+  $("#dashJoinCode").textContent=ev.join_code; $("#dashJoinUrl").textContent=joinUrl(); drawQR("qrDash",joinUrl(),140);
+  renderWaiting();
+}
+function renderWaiting(){
+  const wc=$("#waitingCard"); if(!wc)return;
+  if(!ev.tables||!ev.tables.length||(ev.phase!=="running"&&ev.phase!=="transition")){ wc.innerHTML=""; return; }
+  const seated=new Set(); ev.tables.forEach(t=>t.members.forEach(id=>seated.add(id)));
+  const waiting=attendees.filter(a=>!a.away&&(a.on_break_until||0)<=ev.round&&!seated.has(a.id));
+  if(!waiting.length){ wc.innerHTML=""; return; }
+  wc.innerHTML=`<div class="card" style="border-color:var(--gold);">
+    <div class="section-title">Just arrived — seat them in this round</div>
+    <p class="sub" style="margin:4px 0 10px;">These people joined after round ${ev.round} was built. Drop them into the smallest group so they don't have to wait.</p>
+    <div class="roster">${waiting.map(a=>`<div class="person"><div class="avatar" style="background:${colorFor(a.id)}">${initials(a.name)}</div><div><div class="nm">${esc(a.name)}</div></div><div class="spacer"></div><button class="btn teal sm" onclick="addToCurrentRound('${a.id}')">Seat now</button></div>`).join("")}</div>
+  </div>`;
 }
 
 /* ---------------- ATTENDEE ---------------- */
@@ -704,9 +802,11 @@ async function bootAttendee(joinCode){
 }
 function myTable(){ return (ev.tables||[]).find(t=>t.members.includes(myAttId)); }
 function me(){ return byId[myAttId]; }
-async function joinAsAttendee(name,cw){
-  if(!name.trim())return;
-  const {data}=await sb.from("attendees").insert({event_id:ev.id,name:name.trim(),came_with:cw.trim(),self_joined:true}).select().single();
+async function joinAsAttendee(name,cw,country){
+  if(!name.trim()){toast("Please enter your name.");return;}
+  if(!country){toast("Please choose your country.");return;}
+  const {data,error}=await sb.from("attendees").insert({event_id:ev.id,name:name.trim(),came_with:cw.trim(),country,self_joined:true}).select().single();
+  if(error){toast("Couldn't join — try again.");return;}
   myAttId=data.id; localStorage.setItem("sf_att_"+ev.id,myAttId); await refetchAttendees(); renderAtt();
 }
 async function tapHere(){ await sb.from("attendees").update({tapped_round:ev.round}).eq("id",myAttId); }
@@ -734,10 +834,11 @@ function renderAtt(){
       <p style="color:#cfc7d4;margin:8px 0 0;">Pop your name in to join the pool.</p></div>
       <div class="card" style="margin-top:16px;">
         <label class="field"><span>Your name</span><input type="text" id="a_name" placeholder="e.g. Sam" autocomplete="off"></label>
+        <label class="field"><span>Where are you from? <small>(required)</small></span><select id="a_country">${countryOptions()}</select></label>
         <label class="field"><span>Came with someone? <small>(optional)</small></span><input type="text" id="a_with" placeholder="their name — you won't be paired together"></label>
         <button class="btn primary block" id="a_join">Join the event</button></div>`;
-    $("#a_join").onclick=()=>joinAsAttendee($("#a_name").value,$("#a_with").value);
-    $("#a_name").addEventListener("keydown",e=>{if(e.key==="Enter")joinAsAttendee($("#a_name").value,$("#a_with").value);});
+    $("#a_join").onclick=()=>joinAsAttendee($("#a_name").value,$("#a_with").value,$("#a_country").value);
+    $("#a_name").addEventListener("keydown",e=>{if(e.key==="Enter")$("#a_country").focus();});
     return;
   }
   if(ev.phase==="setup"){
@@ -749,44 +850,52 @@ function renderAtt(){
     return;
   }
   if(ev.phase==="ended"){
-    s.innerHTML=`<div class="att-center"><div class="em">🎉</div><div class="big">Thanks for coming!</div><p class="sub" style="margin:0 auto;">Hope you found a new friend or two. See you next time.</p></div>`;return;
+    s.innerHTML=`<div class="att-center"><div class="em">🎉</div><div class="big">Thanks for coming!</div><p class="sub" style="margin:0 auto;">Hope you found a new friend or two. See you next time.</p>${attInsta(true)}</div>`;return;
   }
   if(ev.phase==="break"){
     s.innerHTML=`<div class="att-center"><div class="em">☕</div><div class="big">Break time</div>
       <div class="att-cd" data-cd style="font-size:26px;color:var(--berry-ink);">${fmt(remaining())}</div>
-      <p class="sub" style="margin:10px auto 0;">Stretch, grab a drink. We'll call you back.</p></div>`;return;
+      <p class="sub" style="margin:10px auto 0;">Stretch, grab a drink. We'll call you back.</p>${attInsta(true)}</div>`;return;
   }
   const t=myTable();
   if(!t){ s.innerHTML=`<div class="att-center"><div class="em">🙂</div><div class="big">Sitting this round out</div><p class="sub" style="margin:0 auto;">You'll be back in the mix next round.</p></div>`; return; }
-  const q=QUESTIONS[t.qIndex],moving=ev.phase==="transition",tapped=(me().tapped_round||0)===ev.round;
+  const moving=ev.phase==="transition",tapped=(me().tapped_round||0)===ev.round;
   const sp=spotFor(t.n), useColor=wf()==="colors"&&sp;
+  const onBreak=(me().on_break_until||0)>ev.round;
   const membersHtml=t.members.map(id=>{const a=byId[id];const isMe=id===myAttId;
-    return `<div class="att-member${isMe?' me':''}"><span class="avatar" style="background:${colorFor(id)}">${initials(a?.name)}</span>${esc(isMe?'You':(a?.name||'?'))}</div>`;}).join("");
-  const actions=`<div class="att-actions"><button class="btn ghost" onclick="requestBreak(1)">Need a break</button><button class="btn ghost" onclick="showInvite()">Invite others</button></div>`;
+    return `<div class="att-member${isMe?' me':''}"><span class="avatar" style="background:${colorFor(id)}">${initials(a?.name)}</span>${a?.country?flagEmoji(a.country)+' ':''}${esc(isMe?'You':(a?.name||'?'))}</div>`;}).join("");
+  const startersBtn=`<button class="btn teal block" style="margin-top:14px;" onclick="showStarters()">💬 Need something to talk about?</button>`;
+  const breakBtn = onBreak
+    ? `<button class="btn gold" style="flex:1" onclick="cancelBreak()">✓ Sitting out next round — tap to undo</button>`
+    : `<button class="btn ghost" style="flex:1" onclick="requestBreak(1)">Sit out next round</button>`;
+  const actions=`<div class="att-actions">${breakBtn}<button class="btn ghost" style="flex:1" onclick="showInvite()">Invite others</button></div>`;
+  const breakNote = onBreak ? `<div style="text-align:center;color:#9a6b00;font-size:12.5px;margin-top:8px;">You won't be paired next round. Changed your mind? Tap the button above to undo.</div>`
+    : `<div style="text-align:center;color:var(--muted);font-size:12.5px;margin-top:8px;">“Sit out” skips you for the next round only — you won't be paired, and you can undo it.</div>`;
   const tapBtn=`<button class="tap-btn ${tapped?'done':''}" onclick="tapHere()">${tapped?"✓ You're here":("I'm at the "+(useColor?esc(sp.name)+" spot":"table"))}</button>`;
   if(useColor){
-    const qCard=`<div class="card" style="margin-top:14px;"><div style="font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:6px;">${moving?"Coming up":"Talk about"} · ${q?esc(q.t):""}</div><div style="font-family:'Baloo 2';font-weight:600;font-size:19px;line-height:1.2;">${q?esc(q.q):""}</div></div>`;
     s.innerHTML=`
-      <div class="att-hero" style="background:${sp.hex};">
+      <div class="att-hero color" style="background:${sp.hex};">
         <div class="att-round" style="color:${sp.text};opacity:.85">${moving?"Go find":"You're at"}</div>
         <div class="att-table" style="color:${sp.text}">${esc(sp.name)}</div>
         <div class="att-cd" style="color:${sp.text};opacity:.85" data-cd>${moving?"starting soon":fmt(remaining())+" left"}</div>
       </div>
-      ${qCard}
       <div class="att-members">${membersHtml}</div>
-      ${moving?`<div class="att-center" style="color:var(--muted);padding:14px 0;">Find the <b style="color:var(--ink)">${esc(sp.name.toLowerCase())}</b> spot and grab a seat.</div>`:tapBtn}
-      ${actions}`;
+      ${moving?`<div class="att-center" style="color:var(--muted);padding:12px 0;">Find the <b style="color:var(--ink)">${esc(sp.name.toLowerCase())}</b> spot and grab a seat.</div>`:tapBtn}
+      ${startersBtn}
+      ${moving?attInsta(false):""}
+      ${actions}${breakNote}`;
   } else {
     s.innerHTML=`
       <div class="att-hero">
         <div class="att-round">${moving?"Head to":"You're at"}</div>
         <div class="att-table">Table ${t.n}</div>
         <div class="att-cd" data-cd>${moving?"starting soon":fmt(remaining())+" left"}</div>
-        <div class="att-q"><div class="k">${moving?"Coming up":"Talk about"} · ${q?esc(q.t):""}</div><div class="t">${q?esc(q.q):""}</div></div>
       </div>
       <div class="att-members">${membersHtml}</div>
-      ${moving?`<div class="att-center" style="color:var(--muted);padding:20px 0;">Find your seat — the host will start the round.</div>`:tapBtn}
-      ${actions}`;
+      ${moving?`<div class="att-center" style="color:var(--muted);padding:12px 0;">Find your seat — the host will start the round.</div>`:tapBtn}
+      ${startersBtn}
+      ${moving?attInsta(false):""}
+      ${actions}${breakNote}`;
   }
 }
 
@@ -802,6 +911,43 @@ function tickCountdown(){
     const m=ev.timer.mode;
     if(m==="round")endRoundNow(); else if(m==="trans"&&ev.settings.autostart)startRoundNow(); else if(m==="break"){toast("Break's over.");}
   }
+}
+function instaHandle(){ const u=ev&&ev.settings&&ev.settings.instagram; if(!u)return""; return "@"+u.replace(/\/+$/,"").split("/").pop(); }
+function attInsta(big){ const u=ev&&ev.settings&&ev.settings.instagram; if(!u)return""; const h=instaHandle();
+  if(big) return `<a href="${esc(u)}" target="_blank" rel="noopener" class="btn primary block" style="margin-top:18px;text-decoration:none;">📸 Follow the host · ${esc(h)}</a>`;
+  return `<div style="text-align:center"><a href="${esc(u)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:14px;color:var(--berry-ink);font-weight:700;text-decoration:none;">📸 Follow the host · ${esc(h)}</a></div>`;
+}
+/* organizer: pop a big join QR to project for latecomers */
+function showJoinQR(){
+  const o=document.createElement("div");o.className="overlay";
+  o.innerHTML=`<div class="sheet"><h3 style="margin-bottom:6px;">Scan to join</h3>
+    <p class="sub" style="margin:0 auto 14px;">New people can join right now — even mid-round.</p><canvas id="qrPop"></canvas>
+    <div class="joincode" style="color:var(--berry-ink);margin-top:8px;">${ev.join_code}</div>
+    <button class="btn ghost block" style="margin-top:14px;" onclick="this.closest('.overlay').remove()">Close</button></div>`;
+  o.addEventListener("click",e=>{if(e.target===o)o.remove();});
+  document.body.appendChild(o); drawQR("qrPop",joinUrl(),240);
+}
+/* attendee: cancel an accidental break */
+async function cancelBreak(){ await sb.from("attendees").update({on_break_until:0}).eq("id",myAttId); toast("Break cancelled — you're in the next round."); }
+/* attendee: browse conversation starters by category */
+function showStarters(){
+  const cats = ev.reflection ? ["Closing"] : CATEGORIES.slice();
+  let active=cats[0];
+  const qsIn=c=>QUESTIONS.filter(q=>q.t===c).filter(q=>!(q.teen&&!ev.settings.teen)).filter(q=>!(q.spicy&&!ev.settings.spicy));
+  const o=document.createElement("div");o.className="overlay";
+  const sheet=document.createElement("div");sheet.className="sheet wide";o.appendChild(sheet);
+  function paint(){
+    sheet.innerHTML=`<h3 style="margin-bottom:4px;">Conversation starters</h3>
+      <p class="sub" style="margin:0 0 10px;">Pick a vibe, then ask whatever you like — these are just ideas.</p>
+      <div class="starter-cats">${cats.map(c=>`<button class="${c===active?'active':''}" data-c="${esc(c)}">${esc(c)}</button>`).join("")}</div>
+      <ul class="starter-qs">${qsIn(active).map(q=>`<li>${esc(q.q)}</li>`).join("")}</ul>
+      <button class="btn ghost block" style="margin-top:14px;" data-close>Close</button>`;
+    sheet.querySelectorAll(".starter-cats button").forEach(b=>b.onclick=()=>{active=b.dataset.c;paint();});
+    sheet.querySelector("[data-close]").onclick=()=>o.remove();
+  }
+  paint();
+  o.addEventListener("click",e=>{if(e.target===o)o.remove();});
+  document.body.appendChild(o);
 }
 function drawQR(id,text,size){
   const el=document.getElementById(id); if(!el) return;
