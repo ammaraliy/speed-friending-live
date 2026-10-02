@@ -557,6 +557,10 @@ async function refetchAttendees(){
   const {data}=await sb.from("attendees").select("*").eq("event_id",ev.id).order("created_at");
   attendees=data||[]; reindex();
 }
+async function refetchEvent(){
+  const {data}=await sb.from("events").select("*").eq("id",ev.id).maybeSingle();
+  if(data) ev=data;
+}
 function subscribeOrg(){
   sb.channel("att-"+ev.id).on("postgres_changes",{event:"*",schema:"public",table:"attendees",filter:"event_id=eq."+ev.id},
     async()=>{ await refetchAttendees(); renderOrg(); }).subscribe();
@@ -795,12 +799,14 @@ async function bootAttendee(joinCode){
   ev=data; myAttId=localStorage.getItem("sf_att_"+ev.id);
   await refetchAttendees();
   sb.channel("ev-"+ev.id).on("postgres_changes",{event:"*",schema:"public",table:"events",filter:"id=eq."+ev.id},
-    p=>{ ev=p.new; renderAtt(); }).subscribe();
+    async()=>{ await refetchEvent(); renderAtt(); }).subscribe();
   sb.channel("attlist-"+ev.id).on("postgres_changes",{event:"*",schema:"public",table:"attendees",filter:"event_id=eq."+ev.id},
     async()=>{ await refetchAttendees(); renderAtt(); }).subscribe();
   renderAtt();
 }
-function myTable(){ return (ev.tables||[]).find(t=>t.members.includes(myAttId)); }
+function evTables(){ let t=ev&&ev.tables; if(typeof t==="string"){ try{t=JSON.parse(t);}catch(e){t=[];} } return Array.isArray(t)?t:[]; }
+function myTable(){ return evTables().find(t=>t.members&&t.members.includes(myAttId)); }
+async function attResync(){ await refetchEvent(); await refetchAttendees(); renderAtt(); }
 function me(){ return byId[myAttId]; }
 async function joinAsAttendee(name,cw,country){
   if(!name.trim()){toast("Please enter your name.");return;}
@@ -858,7 +864,14 @@ function renderAtt(){
       <p class="sub" style="margin:10px auto 0;">Stretch, grab a drink. We'll call you back.</p>${attInsta(true)}</div>`;return;
   }
   const t=myTable();
-  if(!t){ s.innerHTML=`<div class="att-center"><div class="em">🙂</div><div class="big">Sitting this round out</div><p class="sub" style="margin:0 auto;">You'll be back in the mix next round.</p></div>`; return; }
+  if(!t){
+    const onBrk=(me().on_break_until||0)>ev.round;
+    s.innerHTML=`<div class="att-center"><div class="em">${onBrk?'☕':'⏳'}</div>
+      <div class="big">${onBrk?"Sitting this round out":"Getting you seated…"}</div>
+      <p class="sub" style="margin:0 auto 14px;">${onBrk?"You asked to sit out — you'll be back next round.":"Syncing you into the round. If this doesn't update in a few seconds, tap refresh."}</p>
+      ${onBrk?"":`<button class="btn ghost" onclick="attResync()">Refresh</button>`}</div>`;
+    return;
+  }
   const moving=ev.phase==="transition",tapped=(me().tapped_round||0)===ev.round;
   const sp=spotFor(t.n), useColor=wf()==="colors"&&sp;
   const onBreak=(me().on_break_until||0)>ev.round;
