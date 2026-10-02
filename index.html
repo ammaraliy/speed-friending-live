@@ -3,101 +3,64 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Speed Friending — Event Runner</title>
+<title>Speed Friending — Live (Phase 2)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <style>
-  /* ---------- Design tokens ---------- */
   :root{
-    --paper:#F1EFEA;      /* warm oat page bg */
-    --card:#FFFFFF;
-    --ink:#2B2430;        /* deep plum-brown: text + projector bg */
-    --ink-soft:#4A4152;
-    --muted:#8B8391;      /* mauve-grey secondary text */
-    --line:#E3DFD8;       /* hairlines on paper */
-    --berry:#E14B6A;      /* primary accent (raspberry) */
-    --berry-ink:#B7304C;
-    --teal:#2FA098;       /* positive / present */
-    --gold:#F2B441;       /* attention / breaks / timer */
-    --danger:#D2483C;
-    --radius:16px;
-    --radius-sm:10px;
-    --shadow:0 1px 2px rgba(43,36,48,.06), 0 8px 24px rgba(43,36,48,.07);
-    box-sizing:border-box;
-    padding-top:env(safe-area-inset-top,0px);
-    padding-bottom:env(safe-area-inset-bottom,0px);
+    --paper:#F1EFEA;--card:#FFFFFF;--ink:#2B2430;--ink-soft:#4A4152;--muted:#8B8391;
+    --line:#E3DFD8;--berry:#E14B6A;--berry-ink:#B7304C;--teal:#2FA098;--gold:#F2B441;--danger:#D2483C;
+    --radius:16px;--radius-sm:10px;--shadow:0 1px 2px rgba(43,36,48,.06),0 8px 24px rgba(43,36,48,.07);
+    box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
   }
   *,*::before,*::after{box-sizing:border-box;}
-  html{scroll-padding-top:env(safe-area-inset-top,0px);}
-  body{
-    margin:0;background:var(--paper);color:var(--ink);
-    font-family:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-    font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;
-  }
-  h1,h2,h3,.display{font-family:"Baloo 2","Hanken Grotesk",system-ui,sans-serif;line-height:1.1;margin:0;}
+  html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%;}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:"Hanken Grotesk",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100%;}
+  h1,h2,h3,h4,.display{font-family:"Baloo 2","Hanken Grotesk",system-ui,sans-serif;line-height:1.1;margin:0;}
   button{font-family:inherit;cursor:pointer;}
   input,select{font-family:inherit;font-size:16px;}
   a{color:var(--berry-ink);}
 
-  /* ---------- App shell ---------- */
-  .topbar{
-    position:sticky;top:0;z-index:40;background:rgba(241,239,234,.92);
-    backdrop-filter:blur(8px);border-bottom:1px solid var(--line);
-    padding:calc(env(safe-area-inset-top,0px) + 10px) 18px 10px;
-  }
+  /* shell */
+  .topbar{position:sticky;top:0;z-index:40;background:rgba(241,239,234,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:calc(env(safe-area-inset-top,0px)+10px) 18px 10px;}
   .topbar-inner{display:flex;align-items:center;gap:14px;max-width:1120px;margin:0 auto;flex-wrap:wrap;}
   .brand{display:flex;align-items:center;gap:9px;font-family:"Baloo 2";font-weight:800;font-size:19px;letter-spacing:-.01em;}
   .brand .dot{width:15px;height:15px;border-radius:50%;background:var(--berry);box-shadow:0 0 0 4px rgba(225,75,106,.16);}
-  .phase{margin-left:2px;font-size:13px;font-weight:600;color:var(--ink-soft);background:#fff;border:1px solid var(--line);padding:3px 11px;border-radius:99px;}
+  .phase{font-size:13px;font-weight:600;color:var(--ink-soft);background:#fff;border:1px solid var(--line);padding:3px 11px;border-radius:99px;}
   .phase b{color:var(--berry-ink);}
   .clock{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:600;color:var(--muted);font-size:14px;}
   nav.tabs{display:flex;gap:4px;max-width:1120px;margin:8px auto 0;overflow-x:auto;}
-  nav.tabs button{
-    border:none;background:transparent;color:var(--ink-soft);font-weight:600;font-size:15px;
-    padding:8px 14px;border-radius:99px;white-space:nowrap;
-  }
+  nav.tabs button{border:none;background:transparent;color:var(--ink-soft);font-weight:600;font-size:15px;padding:8px 14px;border-radius:99px;white-space:nowrap;}
   nav.tabs button.active{background:var(--ink);color:#fff;}
-  nav.tabs button .n{opacity:.55;margin-right:6px;font-variant-numeric:tabular-nums;}
-
+  nav.tabs button .n{opacity:.55;margin-right:6px;}
   main{max-width:1120px;margin:0 auto;padding:22px 18px 90px;}
-  .view{display:none;}
-  .view.active{display:block;animation:fade .25s ease;}
+  .view{display:none;}.view.active{display:block;animation:fade .25s ease;}
   @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
-  @media (prefers-reduced-motion:reduce){.view.active{animation:none;}}
+  @media(prefers-reduced-motion:reduce){.view.active{animation:none;}}
 
-  /* ---------- Reusable bits ---------- */
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;}
-  .card + .card{margin-top:16px;}
-  .section-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:none;margin-bottom:2px;}
+  .card+.card{margin-top:16px;}
+  .section-title{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:2px;}
   h2.head{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-bottom:3px;}
-  .sub{color:var(--muted);font-size:14.5px;margin-bottom:18px;max-width:60ch;}
+  .sub{color:var(--muted);font-size:14.5px;margin-bottom:18px;max-width:62ch;}
   label.field{display:block;margin-bottom:14px;}
-  label.field > span{display:block;font-weight:600;font-size:14px;margin-bottom:5px;}
+  label.field>span{display:block;font-weight:600;font-size:14px;margin-bottom:5px;}
   label.field small{color:var(--muted);font-weight:400;}
-  input[type=text],input[type=number],select{
-    width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:var(--radius-sm);
-    background:#fff;color:var(--ink);transition:border-color .15s;
-  }
+  input[type=text],input[type=number],select{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:var(--radius-sm);background:#fff;color:var(--ink);transition:border-color .15s;}
   input:focus,select:focus{outline:none;border-color:var(--berry);box-shadow:0 0 0 3px rgba(225,75,106,.14);}
-  .row{display:flex;gap:12px;flex-wrap:wrap;}
-  .row > *{flex:1;min-width:130px;}
+  .row{display:flex;gap:12px;flex-wrap:wrap;}.row>*{flex:1;min-width:130px;}
   .btn{border:none;border-radius:var(--radius-sm);padding:11px 18px;font-weight:700;font-size:15px;background:var(--ink);color:#fff;transition:transform .06s,filter .15s;}
-  .btn:hover{filter:brightness(1.08);}
-  .btn:active{transform:translateY(1px);}
-  .btn.primary{background:var(--berry);}
-  .btn.teal{background:var(--teal);}
-  .btn.gold{background:var(--gold);color:var(--ink);}
+  .btn:hover{filter:brightness(1.08);}.btn:active{transform:translateY(1px);}
+  .btn.primary{background:var(--berry);}.btn.teal{background:var(--teal);}.btn.gold{background:var(--gold);color:var(--ink);}
   .btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line);}
-  .btn.sm{padding:7px 12px;font-size:13.5px;border-radius:9px;}
-  .btn.block{width:100%;}
+  .btn.sm{padding:7px 12px;font-size:13.5px;border-radius:9px;}.btn.block{width:100%;}
   .btn:disabled{opacity:.4;cursor:not-allowed;}
   .pill{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;padding:3px 9px;border-radius:99px;background:#F4EFE6;color:var(--ink-soft);border:1px solid var(--line);}
   .pill.teal{background:rgba(47,160,152,.12);color:#1c7a72;border-color:transparent;}
   .pill.gold{background:rgba(242,180,65,.18);color:#9a6b00;border-color:transparent;}
   .pill.berry{background:rgba(225,75,106,.12);color:var(--berry-ink);border-color:transparent;}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-  @media(max-width:720px){.grid2{grid-template-columns:1fr;}}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}@media(max-width:720px){.grid2{grid-template-columns:1fr;}}
   .hint{background:rgba(47,160,152,.08);border:1px solid rgba(47,160,152,.25);border-radius:var(--radius-sm);padding:12px 14px;font-size:14px;color:var(--ink-soft);}
   .hint b{color:var(--ink);}
   .toggle{display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:600;font-size:14.5px;}
@@ -105,36 +68,28 @@
   .toggle input:checked{background:var(--teal);}
   .toggle input::after{content:"";position:absolute;width:20px;height:20px;border-radius:50%;background:#fff;top:3px;left:3px;transition:left .15s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
   .toggle input:checked::after{left:21px;}
-
-  /* ---------- People roster ---------- */
   .roster{display:flex;flex-direction:column;gap:7px;margin-top:14px;}
   .person{display:flex;align-items:center;gap:11px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:#fff;}
   .person .avatar{width:34px;height:34px;border-radius:50%;flex:none;display:grid;place-items:center;font-weight:700;color:#fff;font-size:14px;}
-  .person .nm{font-weight:600;}
-  .person .with{font-size:12.5px;color:var(--muted);}
-  .person .spacer{margin-left:auto;}
-  .person.away{opacity:.5;}
+  .person .nm{font-weight:600;}.person .with{font-size:12.5px;color:var(--muted);}
+  .person .spacer{margin-left:auto;}.person.away{opacity:.5;}
   .icon-btn{border:none;background:transparent;color:var(--muted);font-size:18px;padding:4px 7px;border-radius:8px;line-height:1;}
   .icon-btn:hover{background:#f2ede4;color:var(--ink);}
-
-  /* ---------- Stats ---------- */
   .stat-row{display:flex;gap:12px;flex-wrap:wrap;}
   .stat{flex:1;min-width:120px;background:#fff;border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px 16px;}
   .stat .v{font-family:"Baloo 2";font-weight:800;font-size:30px;letter-spacing:-.02em;line-height:1;}
   .stat .l{font-size:13px;color:var(--muted);margin-top:4px;}
-  .bar{height:9px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:6px;}
-  .bar > i{display:block;height:100%;background:var(--teal);border-radius:99px;transition:width .4s;}
+  .bar{height:9px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:6px;}.bar>i{display:block;height:100%;background:var(--teal);border-radius:99px;transition:width .4s;}
 
-  /* ---------- ROOM (projector) view: dark ---------- */
+  /* room (dark) */
   #view-room{color:#fff;}
-  .room{background:var(--ink);border-radius:22px;padding:30px;min-height:62vh;display:flex;flex-direction:column;box-shadow:var(--shadow);position:relative;overflow:hidden;}
+  .room{background:var(--ink);border-radius:22px;padding:30px;min-height:60vh;display:flex;flex-direction:column;box-shadow:var(--shadow);position:relative;overflow:hidden;}
   .room::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 12% 0%,rgba(225,75,106,.20),transparent 55%),radial-gradient(120% 90% at 100% 100%,rgba(47,160,152,.18),transparent 55%);pointer-events:none;}
-  .room > *{position:relative;z-index:1;}
+  .room>*{position:relative;z-index:1;}
   .room-top{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;}
   .round-label{font-family:"Baloo 2";font-weight:800;font-size:clamp(26px,4vw,40px);letter-spacing:-.02em;}
   .countdown{margin-left:auto;font-family:"Baloo 2";font-weight:800;font-variant-numeric:tabular-nums;font-size:clamp(40px,8vw,84px);letter-spacing:-.02em;line-height:1;}
-  .countdown.warn{color:var(--gold);}
-  .countdown.paused{opacity:.55;}
+  .countdown.warn{color:var(--gold);}.countdown.paused{opacity:.55;}
   .qcard{margin:22px 0;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:24px 26px;}
   .qcard .qk{font-size:14px;font-weight:700;color:var(--gold);margin-bottom:8px;}
   .qcard .qt{font-family:"Baloo 2";font-weight:600;font-size:clamp(22px,3.4vw,34px);line-height:1.15;}
@@ -143,198 +98,201 @@
   .table-card h4{font-family:"Baloo 2";font-weight:700;font-size:18px;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
   .table-card h4 .tnum{background:var(--berry);color:#fff;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;font-size:14px;flex:none;}
   .table-card ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;}
-  .table-card li{font-size:16px;font-weight:500;color:#f4eff0;}
-  .room-break{flex:1;display:grid;place-items:center;text-align:center;}
-  .room-break .big{font-family:"Baloo 2";font-weight:800;font-size:clamp(34px,7vw,72px);}
+  .table-card li{font-size:16px;font-weight:500;color:#f4eff0;display:flex;align-items:center;gap:7px;}
+  .table-card li .tick{color:var(--teal);font-weight:800;}
+  .table-card li .wait{color:#8f8797;}
+  .room-break,.room-empty{flex:1;display:grid;place-items:center;text-align:center;}
+  .room-break .big,.room-empty .big{font-family:"Baloo 2";font-weight:800;font-size:clamp(30px,6vw,64px);}
   .room-break .cd{font-size:clamp(30px,6vw,60px);font-weight:800;color:var(--gold);font-variant-numeric:tabular-nums;}
-  .room-empty{flex:1;display:grid;place-items:center;text-align:center;color:#cfc7d4;}
-  .room-empty .big{font-family:"Baloo 2";font-weight:700;font-size:clamp(24px,4vw,38px);color:#fff;margin-bottom:8px;}
-
-  /* control bar */
+  .room-empty{color:#cfc7d4;}.room-empty .big{color:#fff;font-size:clamp(24px,4vw,38px);margin-bottom:8px;}
+  .joinbox{display:flex;gap:26px;align-items:center;flex-wrap:wrap;justify-content:center;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:22px;margin-top:8px;}
+  .joinbox canvas{background:#fff;padding:10px;border-radius:12px;}
+  .joincode{font-family:"Baloo 2";font-weight:800;font-size:clamp(30px,5vw,52px);letter-spacing:.08em;color:var(--gold);}
+  .joinurl{color:#cfc7d4;font-size:15px;word-break:break-all;}
   .controlbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:16px;padding:14px;background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);}
-  .controlbar .grp{display:flex;gap:9px;flex-wrap:wrap;}
-  .controlbar .spacer{margin-left:auto;}
-
-  .empty-note{color:var(--muted);font-size:14px;text-align:center;padding:26px;border:1.5px dashed var(--line);border-radius:var(--radius-sm);}
-  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:99px;font-weight:600;font-size:14.5px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s;z-index:100;}
-  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .controlbar .grp{display:flex;gap:9px;flex-wrap:wrap;}.controlbar .spacer{margin-left:auto;}
   .footer-note{max-width:1120px;margin:10px auto 0;padding:0 18px;color:var(--muted);font-size:12.5px;text-align:center;}
   .danger-link{background:none;border:none;color:var(--danger);font-weight:600;font-size:13px;cursor:pointer;text-decoration:underline;}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 20px;border-radius:99px;font-weight:600;font-size:14.5px;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.25s;z-index:100;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ATTENDEE (phone) */
+  .att{max-width:520px;margin:0 auto;padding:22px 18px calc(30px+env(safe-area-inset-bottom,0px));min-height:100%;}
+  .att-hero{background:var(--ink);color:#fff;border-radius:22px;padding:26px;position:relative;overflow:hidden;}
+  .att-hero::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 100% 0%,rgba(225,75,106,.25),transparent 55%);}
+  .att-hero>*{position:relative;z-index:1;}
+  .att-round{font-family:"Baloo 2";font-weight:800;font-size:15px;color:var(--gold);margin-bottom:6px;}
+  .att-table{font-family:"Baloo 2";font-weight:800;font-size:clamp(40px,13vw,60px);letter-spacing:-.02em;line-height:1;}
+  .att-cd{font-variant-numeric:tabular-nums;font-weight:700;font-size:18px;color:#cfc7d4;margin-top:10px;}
+  .att-q{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:16px;padding:18px;margin-top:18px;}
+  .att-q .k{font-size:12.5px;font-weight:700;color:var(--gold);margin-bottom:6px;}
+  .att-q .t{font-family:"Baloo 2";font-weight:600;font-size:20px;line-height:1.2;}
+  .att-members{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+  .att-member{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:99px;padding:5px 12px 5px 5px;font-weight:600;font-size:14px;}
+  .att-member .avatar{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700;}
+  .att-member.me{border-color:var(--berry);box-shadow:0 0 0 2px rgba(225,75,106,.15);}
+  .tap-btn{width:100%;margin-top:18px;padding:20px;border:none;border-radius:18px;background:var(--berry);color:#fff;font-family:"Baloo 2";font-weight:800;font-size:22px;box-shadow:var(--shadow);}
+  .tap-btn.done{background:var(--teal);}
+  .att-actions{display:flex;gap:10px;margin-top:12px;}
+  .att-actions .btn{flex:1;}
+  .att-center{text-align:center;padding:40px 10px;}
+  .att-center .big{font-family:"Baloo 2";font-weight:800;font-size:26px;margin-bottom:8px;}
+  .att-center .em{font-size:44px;margin-bottom:10px;}
+  .overlay{position:fixed;inset:0;background:rgba(43,36,48,.72);z-index:200;display:grid;place-items:center;padding:20px;}
+  .overlay .sheet{background:#fff;border-radius:22px;padding:26px;max-width:360px;width:100%;text-align:center;}
+  .overlay canvas{background:#fff;padding:8px;border-radius:12px;}
+  .hidden{display:none!important;}
 </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div class="topbar-inner">
-    <div class="brand"><span class="dot"></span> Speed Friending</div>
-    <div class="phase" id="phasePill">Phase: <b>Setup</b></div>
-    <div class="clock" id="clock">—</div>
-  </div>
-  <nav class="tabs" id="tabs">
-    <button data-tab="setup" class="active"><span class="n">1</span>Setup</button>
-    <button data-tab="people"><span class="n">2</span>People</button>
-    <button data-tab="room"><span class="n">3</span>Room</button>
-    <button data-tab="dash"><span class="n">4</span>Dashboard</button>
-  </nav>
+<!-- ========== CONFIG-MISSING SCREEN ========== -->
+<div id="needsConfig" class="hidden">
+  <main>
+    <h2 class="head" style="margin-top:20px;">Almost there — connect your database</h2>
+    <p class="sub">This live version needs a free Supabase backend so phones and your laptop stay in sync. Open this file, find the two lines near the top of the script, and paste your project's URL and anon key. The step-by-step guide came with this file.</p>
+    <div class="card"><pre style="white-space:pre-wrap;font-size:13px;color:var(--ink-soft)">const SUPABASE_URL  = "https://YOUR-PROJECT.supabase.co";
+const SUPABASE_ANON_KEY = "YOUR-ANON-KEY";</pre></div>
+  </main>
 </div>
 
-<main>
-  <!-- ============ SETUP ============ -->
-  <section class="view active" id="view-setup">
-    <h2 class="head">Set up your event</h2>
-    <p class="sub">Set these once before people arrive. You can change most of them later from the Dashboard.</p>
-
-    <div class="grid2">
-      <div class="card">
-        <div class="section-title">Basics</div>
-        <label class="field"><span>Event name</span>
-          <input type="text" id="s_name" placeholder="Thursday Friend Night" />
-        </label>
-        <label class="field"><span>Tables in the room <small>— how many spots you've set up</small></span>
-          <input type="number" id="s_tables" min="2" max="40" value="12" />
-        </label>
-        <div class="row">
-          <label class="field"><span>Round length <small>(minutes)</small></span>
-            <input type="number" id="s_round" min="1" max="60" value="12" />
+<!-- ========== ORGANIZER CONSOLE ========== -->
+<div id="orgApp" class="hidden">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand"><span class="dot"></span> Speed Friending</div>
+      <div class="phase" id="phasePill">Phase: <b>Setup</b></div>
+      <div class="clock" id="clock">—</div>
+    </div>
+    <nav class="tabs" id="tabs">
+      <button data-tab="setup" class="active"><span class="n">1</span>Setup</button>
+      <button data-tab="people"><span class="n">2</span>People</button>
+      <button data-tab="room"><span class="n">3</span>Room</button>
+      <button data-tab="dash"><span class="n">4</span>Dashboard</button>
+    </nav>
+  </div>
+  <main>
+    <!-- SETUP -->
+    <section class="view active" id="view-setup">
+      <h2 class="head">Set up your event</h2>
+      <p class="sub">Set these once, then create the event to open the doors. People join by scanning a QR from their phones.</p>
+      <div class="grid2">
+        <div class="card">
+          <div class="section-title">Basics</div>
+          <label class="field"><span>Event name</span><input type="text" id="s_name" placeholder="Thursday Friend Night" /></label>
+          <label class="field"><span>Send people to their group by</span>
+            <select id="s_wayfind">
+              <option value="colors">Colours — each spot has a colour (recommended)</option>
+              <option value="tables">Table numbers</option>
+            </select>
           </label>
-          <label class="field"><span>Move time between rounds <small>(seconds)</small></span>
-            <input type="number" id="s_trans" min="10" max="600" value="90" />
-          </label>
+          <div class="row">
+            <label class="field"><span>Round length <small>(min)</small></span><input type="number" id="s_round" min="1" max="60" value="12" /></label>
+            <label class="field"><span>Move time <small>(sec)</small></span><input type="number" id="s_trans" min="10" max="600" value="90" /></label>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title">Breaks & flow</div>
+          <div class="row">
+            <label class="field"><span>Break every <small>(rounds)</small></span><input type="number" id="s_breakevery" min="0" max="20" value="3" /></label>
+            <label class="field"><span>Break length <small>(min)</small></span><input type="number" id="s_breaklen" min="1" max="60" value="10" /></label>
+          </div>
+          <label class="toggle" style="margin:6px 0 10px;"><input type="checkbox" id="s_autostart" /><span>Auto-start next round when move time ends</span></label>
+          <p class="sub" style="margin:0;">Groups of <b>4</b> with a few <b>3</b>s so any headcount fits.</p>
         </div>
       </div>
-
       <div class="card">
-        <div class="section-title">Breaks & flow</div>
-        <div class="row">
-          <label class="field"><span>Break every <small>(rounds)</small></span>
-            <input type="number" id="s_breakevery" min="0" max="20" value="3" />
+        <div class="section-title">Conversation prompts</div>
+        <div class="row" style="margin-top:8px;">
+          <label class="field"><span>Prompt mode</span>
+            <select id="s_qmode"><option value="auto">Auto — light → deep</option><option value="cat">Pick a category</option></select>
           </label>
-          <label class="field"><span>Break length <small>(minutes)</small></span>
-            <input type="number" id="s_breaklen" min="1" max="60" value="10" />
-          </label>
+          <label class="field" id="catWrap" style="display:none;"><span>Category</span><select id="s_qcat"></select></label>
         </div>
-        <label class="toggle" style="margin:6px 0 16px;">
-          <input type="checkbox" id="s_autostart" />
-          <span>Start the next round automatically when move time ends<br><small style="color:var(--muted);font-weight:400">Off = you press “Start round” yourself once people have moved (recommended).</small></span>
-        </label>
-        <div class="section-title">Group size</div>
-        <p class="sub" style="margin:4px 0 0;">The app fills tables with groups of <b>4</b>, using a few <b>3</b>s so any headcount fits. Nobody is left standing.</p>
+        <div class="row">
+          <label class="toggle"><input type="checkbox" id="s_teen" /><span>Include school/teen questions</span></label>
+          <label class="toggle"><input type="checkbox" id="s_spicy" /><span>Include dating-ish questions</span></label>
+          <label class="toggle"><input type="checkbox" id="s_closing" checked /><span>End with a reflection round</span></label>
+        </div>
       </div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">Conversation prompts</div>
-      <p class="sub" style="margin:4px 0 14px;">One prompt shows on the room screen each round. In <b>Auto</b> mode they start light and get deeper as the night warms up.</p>
-      <div class="row">
-        <label class="field"><span>Prompt mode</span>
-          <select id="s_qmode">
-            <option value="auto">Auto — light → deep as rounds go on</option>
-            <option value="cat">Pick a category</option>
-          </select>
-        </label>
-        <label class="field" id="catWrap" style="display:none;"><span>Category</span>
-          <select id="s_qcat"></select>
-        </label>
+      <div style="margin-top:18px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
+        <button class="btn primary" id="createEvent">Create event & open doors →</button>
+        <button class="danger-link" id="newEvent" style="display:none;">Start a brand-new event</button>
       </div>
-      <div class="row" style="margin-top:2px;">
-        <label class="toggle"><input type="checkbox" id="s_teen" /><span>Include school/teen questions</span></label>
-        <label class="toggle"><input type="checkbox" id="s_spicy" /><span>Include dating-ish questions (crush, marriage…)</span></label>
-        <label class="toggle"><input type="checkbox" id="s_closing" checked /><span>End with a reflection round</span></label>
+    </section>
+
+    <!-- PEOPLE -->
+    <section class="view" id="view-people">
+      <h2 class="head">People are joining</h2>
+      <p class="sub">Project the Room tab so everyone sees the QR. Names appear here live as people join from their phones. You can also add anyone without a phone by hand.</p>
+      <div class="card">
+        <div class="section-title">Add someone without a phone</div>
+        <div class="row" style="align-items:flex-end;margin-top:8px;">
+          <label class="field" style="margin-bottom:0;flex:2;"><span>Name</span><input type="text" id="p_name" placeholder="Name" autocomplete="off" /></label>
+          <label class="field" style="margin-bottom:0;"><span>Came with</span><input type="text" id="p_with" placeholder="optional" autocomplete="off" /></label>
+          <button class="btn" id="addPerson" style="flex:none;">Add</button>
+        </div>
+        <div class="hint" style="margin-top:14px;" id="coverageHint">Waiting for people to join…</div>
+        <div class="roster" id="roster"></div>
       </div>
-    </div>
-
-    <div style="margin-top:18px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;">
-      <button class="btn primary" id="saveSetup">Save & go to People →</button>
-      <button class="danger-link" id="resetAll">Reset everything</button>
-    </div>
-  </section>
-
-  <!-- ============ PEOPLE ============ -->
-  <section class="view" id="view-people">
-    <h2 class="head">Who's here</h2>
-    <p class="sub">Add people as they arrive — walk-ins are welcome any time, even mid-event. If two people came together, put the same label in “Came with” so they won't be seated together.</p>
-
-    <div class="card">
-      <div class="row" style="align-items:flex-end;">
-        <label class="field" style="margin-bottom:0;flex:2;"><span>Name</span>
-          <input type="text" id="p_name" placeholder="e.g. Amir" autocomplete="off" />
-        </label>
-        <label class="field" style="margin-bottom:0;"><span>Came with <small>(optional)</small></span>
-          <input type="text" id="p_with" placeholder="e.g. Amir&Lena" autocomplete="off" />
-        </label>
-        <button class="btn primary" id="addPerson" style="flex:none;">Add</button>
+      <div style="margin-top:18px;display:flex;gap:12px;flex-wrap:wrap;">
+        <button class="btn teal" id="startEvent">Lock the pool & start round 1 →</button>
+        <span class="pill" id="peopleCount">0 people</span>
       </div>
-      <div class="hint" style="margin-top:14px;" id="coverageHint">Add people to see how many rounds you'll need.</div>
-      <div class="roster" id="roster"></div>
-    </div>
+    </section>
 
-    <div style="margin-top:18px;display:flex;gap:12px;flex-wrap:wrap;">
-      <button class="btn teal" id="startEvent">Lock the pool & start the event →</button>
-      <span class="pill" id="peopleCount">0 people</span>
-    </div>
-    <p class="sub" style="margin-top:10px;">Locking builds round 1. You can still add latecomers or remove people afterwards from the Dashboard.</p>
-  </section>
+    <!-- ROOM -->
+    <section class="view" id="view-room">
+      <div class="room" id="roomStage"></div>
+      <div class="controlbar" id="controlbar"></div>
+      <p class="footer-note">Project this screen. Press <b>F11</b> for full-screen. People join by scanning the QR — no app to install.</p>
+    </section>
 
-  <!-- ============ ROOM (projector) ============ -->
-  <section class="view" id="view-room">
-    <div class="room" id="roomStage"><!-- filled by render --></div>
-    <div class="controlbar" id="controlbar"><!-- filled by render --></div>
-    <p class="footer-note">Tip: plug this laptop into the projector and press <b>F11</b> (full-screen). The room reads the big screen; you drive from the buttons.</p>
-  </section>
-
-  <!-- ============ DASHBOARD ============ -->
-  <section class="view" id="view-dash">
-    <h2 class="head">Dashboard</h2>
-    <p class="sub">Your private view. Mark who's stepped away, hand out breaks, and see who has met whom. The room screen never shows this.</p>
-
-    <div class="stat-row" id="stats"></div>
-
-    <div class="card" style="margin-top:16px;">
-      <div class="section-title">People <span id="dashCount" style="color:var(--ink)"></span></div>
-      <p class="sub" style="margin:4px 0 0;">Tap a name to mark them away/back. Away people are skipped when building the next round.</p>
-      <div class="roster" id="dashRoster"></div>
-      <div class="row" style="margin-top:14px;align-items:flex-end;">
-        <label class="field" style="margin-bottom:0;flex:2;"><span>Add a latecomer</span>
-          <input type="text" id="d_name" placeholder="Name" autocomplete="off" />
-        </label>
-        <label class="field" style="margin-bottom:0;"><span>Came with</span>
-          <input type="text" id="d_with" placeholder="optional" autocomplete="off" />
-        </label>
-        <button class="btn" id="d_add" style="flex:none;">Add</button>
+    <!-- DASHBOARD -->
+    <section class="view" id="view-dash">
+      <h2 class="head">Dashboard</h2>
+      <p class="sub">Your private view. See who has tapped in at their table this round, hand out breaks, and watch connections grow.</p>
+      <div class="stat-row" id="stats"></div>
+      <div class="card" style="margin-top:16px;">
+        <div class="section-title">People <span id="dashCount" style="color:var(--ink)"></span></div>
+        <p class="sub" style="margin:4px 0 0;">A <span class="pill teal" style="padding:1px 7px">✓ here</span> means they tapped in at their table this round. Tap a name to mark away/back.</p>
+        <div class="roster" id="dashRoster"></div>
       </div>
-    </div>
-
-    <div class="card">
-      <div class="section-title">Event settings you can change on the fly</div>
-      <div class="row" style="margin-top:8px;">
-        <label class="field"><span>Round length (min)</span><input type="number" id="d_round" min="1" max="60" /></label>
-        <label class="field"><span>Move time (sec)</span><input type="number" id="d_trans" min="10" max="600" /></label>
-        <label class="field"><span>Break every (rounds)</span><input type="number" id="d_breakevery" min="0" max="20" /></label>
-        <label class="field"><span>Break length (min)</span><input type="number" id="d_breaklen" min="1" max="60" /></label>
+      <div class="card">
+        <div class="section-title">Settings — change on the fly</div>
+        <div class="row" style="margin-top:8px;">
+          <label class="field"><span>Round (min)</span><input type="number" id="d_round" min="1" max="60" /></label>
+          <label class="field"><span>Move (sec)</span><input type="number" id="d_trans" min="10" max="600" /></label>
+          <label class="field"><span>Break every</span><input type="number" id="d_breakevery" min="0" max="20" /></label>
+          <label class="field"><span>Break (min)</span><input type="number" id="d_breaklen" min="1" max="60" /></label>
+        </div>
+        <button class="btn ghost sm" id="d_saveSettings">Save settings</button>
       </div>
-      <button class="btn ghost sm" id="d_saveSettings">Save settings</button>
-    </div>
+      <div class="card">
+        <div class="section-title">Danger zone</div>
+        <button class="danger-link" id="d_reset" style="margin-top:8px;">End & start a new event</button>
+      </div>
+    </section>
+  </main>
+</div>
 
-    <div class="card">
-      <div class="section-title">Danger zone</div>
-      <p class="sub" style="margin:6px 0 10px;">Ended the night? Export isn't in this version yet — reset when you're done.</p>
-      <button class="danger-link" id="d_reset">Reset event & clear everyone</button>
-    </div>
-  </section>
-</main>
+<!-- ========== ATTENDEE (phone) ========== -->
+<div id="attApp" class="hidden"><div class="att" id="attStage"></div></div>
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <script>
 /* ============================================================
-   Speed Friending — single-file event runner (Phase 1)
-   All state lives on THIS device and is saved to localStorage.
+   Speed Friending — Phase 2 (Supabase real-time)
+   PASTE YOUR TWO KEYS BELOW. Setup guide shipped with this file.
    ============================================================ */
+const SUPABASE_URL  = "https://deyuxkfhdpsifaceyioo.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_UEIIpdkwsKgxnVtaDpXlaw_9tPqgbgP";
 
-/* ---------- Question bank (your categorized sheet) ---------- */
-/* depth: 1=light, 2=personal, 3=deep. teen/spicy/closing are flags. */
-const QUESTIONS = [
-  // Icebreakers & silly
+/* ---------- question bank (same as Phase 1) ---------- */
+const QUESTIONS=[
   {t:"Icebreakers & Silly",d:1,q:"What is your biggest pet peeve?"},
   {t:"Icebreakers & Silly",d:1,q:"What's your favorite kind of sandwich?"},
   {t:"Icebreakers & Silly",d:1,q:"Favorite ice cream flavor? And — fries dipped in a milkshake: gross or great?"},
@@ -343,7 +301,6 @@ const QUESTIONS = [
   {t:"Icebreakers & Silly",d:1,q:"What makes you laugh the hardest?"},
   {t:"Icebreakers & Silly",d:1,q:"What's your favorite karaoke song?"},
   {t:"Icebreakers & Silly",d:1,q:"What's your favorite song to sing in the shower when no one can hear you?"},
-  // Favorites
   {t:"Favorites",d:1,q:"What hobbies do you enjoy?"},
   {t:"Favorites",d:1,q:"What's your favorite movie, and why?"},
   {t:"Favorites",d:1,q:"What's your favorite month of the year? Why?"},
@@ -353,7 +310,6 @@ const QUESTIONS = [
   {t:"Favorites",d:1,q:"Favorite home-cooked meal, favorite fast food, and one thing you can cook yourself?"},
   {t:"Favorites",d:1,q:"What do you like to do in your free time?"},
   {t:"Favorites",d:1,q:"What's your favorite subject in school, and why?",teen:true},
-  // Hypotheticals
   {t:"Hypotheticals",d:1,q:"If you could be granted 3 wishes, what would they be?"},
   {t:"Hypotheticals",d:1,q:"If you could be any animal, what would you be? Why?"},
   {t:"Hypotheticals",d:1,q:"If you could have any superpower, what would it be — and would you use it for good or evil?"},
@@ -366,20 +322,17 @@ const QUESTIONS = [
   {t:"Hypotheticals",d:1,q:"If you could ask one question and get an honest answer, what would it be?"},
   {t:"Hypotheticals",d:1,q:"You have a whole free day and money is no object. What do you do?"},
   {t:"Hypotheticals",d:2,q:"If you HAD to give up one sense, which would it be and why?"},
-  // Dreams & future
   {t:"Dreams & Future",d:2,q:"What did you want to be when you were a kid?"},
   {t:"Dreams & Future",d:2,q:"What's your dream job?"},
   {t:"Dreams & Future",d:2,q:"What's the first thing that comes to mind when you think about the future?"},
   {t:"Dreams & Future",d:2,q:"Name something you're good at, and something you'd like to do better."},
   {t:"Dreams & Future",d:2,q:"Do you want to get married? How many kids would you want?",spicy:true},
-  // Travel & places
   {t:"Travel & Places",d:1,q:"If you could go anywhere in the world, where would you go?"},
   {t:"Travel & Places",d:1,q:"Have you ever been to another country? When? What did you see?"},
   {t:"Travel & Places",d:2,q:"If you could have three homes around the world, where would they be? Why?"},
   {t:"Travel & Places",d:1,q:"You won a trip for you and two people. Who would you take, and why?"},
   {t:"Travel & Places",d:2,q:"Where were you born? Where else have you lived? Which place was your favorite?"},
   {t:"Travel & Places",d:2,q:"What part of the world would you like to explore next?"},
-  // Memories & story
   {t:"Memories & Your Story",d:1,q:"What's the worst gift you ever received? Who was it from?"},
   {t:"Memories & Your Story",d:2,q:"Name a gift you'll never forget."},
   {t:"Memories & Your Story",d:1,q:"What was the best thing that happened to you this past week?"},
@@ -391,7 +344,6 @@ const QUESTIONS = [
   {t:"Memories & Your Story",d:2,q:"What's the last book you read? Tell it in three to five sentences."},
   {t:"Memories & Your Story",d:1,q:"What book, movie, or show would you recommend right now? Why?"},
   {t:"Memories & Your Story",d:2,q:"Name five things you couldn't live without."},
-  // Deep
   {t:"Deep & Meaningful",d:3,q:"If your house were burning down, what three objects would you try to save?"},
   {t:"Deep & Meaningful",d:3,q:"What is the hardest thing you've ever done?"},
   {t:"Deep & Meaningful",d:3,q:"Name one thing you really like about yourself."},
@@ -401,7 +353,6 @@ const QUESTIONS = [
   {t:"Deep & Meaningful",d:3,q:"If a time machine worked only once, what point in the future or history would you visit?"},
   {t:"Deep & Meaningful",d:3,q:"If you could go back in time, where and when would you go? What would you do?"},
   {t:"Deep & Meaningful",d:3,q:"If you could redo this past week, what would you do differently?"},
-  // Closing / reflection
   {t:"Closing",d:2,q:"What was your happiest moment today?",closing:true},
   {t:"Closing",d:2,q:"Did you make a friend today? How?",closing:true},
   {t:"Closing",d:2,q:"Was there someone here who really rocked your world? Share why.",closing:true},
@@ -409,447 +360,453 @@ const QUESTIONS = [
   {t:"Closing",d:2,q:"What's one story from today you'll tell your best friend?",closing:true},
   {t:"Closing",d:2,q:"What's one word that sums up this experience for you?",closing:true},
 ];
-const CATEGORIES = [...new Set(QUESTIONS.filter(q=>!q.closing).map(q=>q.t))];
+const CATEGORIES=[...new Set(QUESTIONS.filter(q=>!q.closing).map(q=>q.t))];
+const MAX_BREAK_PCT=0.15;
 
-/* ---------- State ---------- */
-const LS_KEY = "sf_state_v1";
-const AVATAR_COLORS = ["#E14B6A","#2FA098","#F2B441","#6C7BE0","#E07A4B","#8E63C4","#3AAE6B","#D45C93"];
-let S = load() || freshState();
+/* ---------- wayfinding colours (first 10 are the most distinct across a room) ---------- */
+const COLORS=[
+ {name:"Red",hex:"#E23B4E",text:"#fff"},
+ {name:"Blue",hex:"#3B82D6",text:"#fff"},
+ {name:"Yellow",hex:"#F2C230",text:"#2B2430"},
+ {name:"Green",hex:"#3DA35D",text:"#fff"},
+ {name:"Purple",hex:"#8E63C4",text:"#fff"},
+ {name:"Orange",hex:"#F2762E",text:"#fff"},
+ {name:"Teal",hex:"#2FA098",text:"#fff"},
+ {name:"Pink",hex:"#E85C9A",text:"#fff"},
+ {name:"Lime",hex:"#8BC34A",text:"#2B2430"},
+ {name:"Indigo",hex:"#5159C9",text:"#fff"},
+ {name:"Coral",hex:"#F2683C",text:"#fff"},
+ {name:"Cyan",hex:"#30B6C4",text:"#2B2430"},
+ {name:"Magenta",hex:"#C0407A",text:"#fff"},
+ {name:"Gold",hex:"#E0A72E",text:"#2B2430"},
+ {name:"Mint",hex:"#5ECB9E",text:"#2B2430"},
+ {name:"Lavender",hex:"#A98BE0",text:"#2B2430"},
+];
+function wf(){return (ev&&ev.settings&&ev.settings.wayfind)||"colors";}
+function spotFor(n){ if(wf()!=="colors")return null; return COLORS[(n-1)%COLORS.length]; }
 
-function freshState(){
-  return {
-    settings:{
-      name:"", tables:12, round:12, trans:90,
-      breakEvery:3, breakLen:10, autostart:false,
-      qmode:"auto", qcat:CATEGORIES[0], teen:false, spicy:false, closing:true
-    },
-    people:[],            // {id,name,with,away}
-    started:false,
-    phase:"setup",        // setup | running | transition | break | ended
-    round:0,              // current round number
-    tables:[],            // current round: [{n,label,members:[id],qIndex}]
-    usedQ:[],             // question indices used
-    met:{},               // "a|b" -> count
-    timer:{running:false,endsAt:null,remaining:null,mode:null}, // mode: round|trans|break
-    roundsSinceBreak:0
-  };
-}
-function save(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); }catch(e){ /* private mode / quota — app still works in-memory */ } }
-function load(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)); }catch(e){ return null; } }
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const AVATARS=["#E14B6A","#2FA098","#F2B441","#6C7BE0","#E07A4B","#8E63C4","#3AAE6B","#D45C93"];
+function initials(n){return (n||"").trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase()||"?";}
+function colorFor(id){let h=0;for(const c of (id||""))h=(h*31+c.charCodeAt(0))>>>0;return AVATARS[h%AVATARS.length];}
+function esc(s){return (s||"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));}
+function shuffle(a){a=[...a];for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
+function pkey(a,b){return a<b?a+"|"+b:b+"|"+a;}
+function fmt(s){s=Math.max(0,s|0);const m=(s/60)|0,ss=s%60;return m+":"+String(ss).padStart(2,"0");}
+function code4(){const c="ABCDEFGHJKMNPQRSTUVWXYZ23456789";let r="";for(let i=0;i<4;i++)r+=c[(Math.random()*c.length)|0];return r;}
+let toastTimer;function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove("show"),2200);}
+function cfgOk(){return !SUPABASE_URL.includes("YOUR-")&&!SUPABASE_ANON_KEY.includes("YOUR-");}
 
-/* ---------- Utilities ---------- */
-const $ = s=>document.querySelector(s);
-const uid = ()=>Math.random().toString(36).slice(2,9);
-function shuffle(a){ a=[...a]; for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]];} return a; }
-function initials(n){ return n.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase()||"?"; }
-function colorFor(id){ let h=0; for(const c of id) h=(h*31+c.charCodeAt(0))>>>0; return AVATAR_COLORS[h%AVATAR_COLORS.length]; }
-function pkey(a,b){ return a<b ? a+"|"+b : b+"|"+a; }
-function personById(id){ return S.people.find(p=>p.id===id); }
-let toastTimer;
-function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),2200); }
-
-/* ---------- Group sizing: 4s with a few 3s so any headcount fits ---------- */
+/* ---------- matching (same core as Phase 1) ---------- */
 function splitSizes(n){
-  if(n<=0) return [];
-  if(n<3) return [n];                       // 1 (sit out) or a pair
-  for(let fours=Math.floor(n/4); fours>=0; fours--){
-    const rem = n - 4*fours;
-    if(rem%3===0){
-      return [...Array(fours).fill(4), ...Array(rem/3).fill(3)];
-    }
+  if(n<=0)return[];if(n<3)return[n];
+  for(let f=Math.floor(n/4);f>=0;f--){const rem=n-4*f;if(rem%3===0)return[...Array(f).fill(4),...Array(rem/3).fill(3)];}
+  const rest=splitSizes(n-2);return rest.length?[2,...rest]:[n];
+}
+function pairCost(a,b,byId,met){
+  const pa=byId[a],pb=byId[b];
+  if(pa.came_with&&pb.came_with&&pa.came_with.trim().toLowerCase()===pb.came_with.trim().toLowerCase())return 1000;
+  return (met[pkey(a,b)]||0)*10;
+}
+function buildAssignment(ids,byId,met){
+  const sizes=splitSizes(ids.length);let best=null,bc=Infinity;
+  for(let att=0;att<60;att++){
+    const order=shuffle(ids),groups=sizes.map(s=>({size:s,m:[]})),rem=[...order];
+    for(const g of groups){g.m.push(rem.shift());
+      while(g.m.length<g.size&&rem.length){let bi=0,bcc=Infinity;
+        for(let i=0;i<rem.length;i++){let c=0;for(const m of g.m)c+=pairCost(rem[i],m,byId,met);if(c<bcc){bcc=c;bi=i;}}
+        g.m.push(rem.splice(bi,1)[0]);}}
+    const tbls=groups.map(g=>g.m);let cost=0;
+    for(const t of tbls)for(let i=0;i<t.length;i++)for(let j=i+1;j<t.length;j++)cost+=pairCost(t[i],t[j],byId,met);
+    if(cost<bc){bc=cost;best=tbls;}if(cost===0)break;
   }
-  // rare fallback (e.g. n=5) → one pair + split the rest
-  const rest = splitSizes(n-2);
-  return rest.length ? [2, ...rest] : [n];
+  return best||[];
 }
 
-/* ---------- Matching: maximize unique meetings, respect "came with" ---------- */
-function pairCost(a,b){
-  const pa=personById(a), pb=personById(b);
-  if(pa.with && pb.with && pa.with.trim().toLowerCase()===pb.with.trim().toLowerCase()) return 1000; // came together
-  return (S.met[pkey(a,b)]||0) * 10; // penalize meeting again
-}
-function tablesCost(tables){
-  let c=0;
-  for(const t of tables){
-    for(let i=0;i<t.length;i++) for(let j=i+1;j<t.length;j++) c+=pairCost(t[i],t[j]);
-  }
-  return c;
-}
-function buildAssignment(poolIds){
-  const sizes = splitSizes(poolIds.length);
-  let best=null, bestCost=Infinity;
-  for(let attempt=0; attempt<60; attempt++){
-    const order = shuffle(poolIds);
-    const groups = sizes.map(s=>({size:s, m:[]}));
-    const remaining = [...order];
-    for(const g of groups){
-      g.m.push(remaining.shift());
-      while(g.m.length<g.size && remaining.length){
-        let bi=0, bc=Infinity;
-        for(let i=0;i<remaining.length;i++){
-          let c=0; for(const m of g.m) c+=pairCost(remaining[i],m);
-          if(c<bc){bc=c; bi=i;}
-        }
-        g.m.push(remaining.splice(bi,1)[0]);
-      }
-    }
-    const tbls = groups.map(g=>g.m);
-    const cost = tablesCost(tbls);
-    if(cost<bestCost){ bestCost=cost; best=tbls; }
-    if(cost===0) break;
-  }
-  return best || [];
-}
-function recordMeetings(tables){
-  for(const t of tables){
-    for(let i=0;i<t.length;i++) for(let j=i+1;j<t.length;j++){
-      const k=pkey(t[i],t[j]); S.met[k]=(S.met[k]||0)+1;
-    }
-  }
-}
-
-/* ---------- Question picking ---------- */
-function pickQuestion(forRound, closing){
-  const pool = QUESTIONS.map((q,i)=>({q,i})).filter(({q,i})=>{
-    if(S.usedQ.includes(i)) return false;
-    if(closing) return !!q.closing;
-    if(q.closing) return false;
-    if(q.teen && !S.settings.teen) return false;
-    if(q.spicy && !S.settings.spicy) return false;
-    if(S.settings.qmode==="cat" && q.t!==S.settings.qcat) return false;
-    if(S.settings.qmode==="auto"){
-      const target = forRound<=2 ? 1 : forRound<=4 ? 2 : 3; // depth curve
-      if(q.d!==target) return false;
-    }
-    return true;
+/* ---------- question picking (organizer only) ---------- */
+function pickQuestion(ev,forRound,closing){
+  const st=ev.settings, used=ev.used_q||[];
+  const filt=(relax)=>QUESTIONS.map((q,i)=>({q,i})).filter(({q,i})=>{
+    if(used.includes(i))return false;
+    if(closing)return !!q.closing; if(q.closing)return false;
+    if(q.teen&&!st.teen)return false; if(q.spicy&&!st.spicy)return false;
+    if(!relax){
+      if(st.qmode==="cat"&&q.t!==st.qcat)return false;
+      if(st.qmode==="auto"){const tgt=forRound<=2?1:forRound<=4?2:3;if(q.d!==tgt)return false;}
+    } return true;
   });
-  let chosen;
-  if(pool.length){ chosen = pool[(Math.random()*pool.length)|0]; }
-  else {
-    // relax: any unused non-closing (or closing) question that passes toggles
-    const relaxed = QUESTIONS.map((q,i)=>({q,i})).filter(({q,i})=>{
-      if(S.usedQ.includes(i)) return false;
-      if(closing) return !!q.closing;
-      if(q.closing) return false;
-      if(q.teen && !S.settings.teen) return false;
-      if(q.spicy && !S.settings.spicy) return false;
-      return true;
-    });
-    chosen = relaxed.length ? relaxed[(Math.random()*relaxed.length)|0] : null;
-  }
-  if(!chosen){ S.usedQ=[]; return pickQuestion(forRound,closing); } // recycle if exhausted
-  S.usedQ.push(chosen.i);
-  return chosen.i;
+  let pool=filt(false); if(!pool.length)pool=filt(true);
+  if(!pool.length){ev.used_q=[];return pickQuestion(ev,forRound,closing);}
+  const ch=pool[(Math.random()*pool.length)|0]; ev.used_q=[...used,ch.i]; return ch.i;
 }
 
-/* ---------- Round flow ---------- */
-function activePool(){ return S.people.filter(p=>!p.away).map(p=>p.id); }
+/* ============================================================
+   SUPABASE + BOOT
+   ============================================================ */
+let sb=null, mode=null, ev=null, attendees=[], byId={}, myAttId=null, org=null;
 
-function startEvent(){
-  if(S.people.length<3){ toast("Add at least 3 people first."); return; }
-  S.started=true; S.round=0; S.met={}; S.usedQ=[]; S.roundsSinceBreak=0;
-  nextRound();
-  switchTab("room");
+function reindex(){ byId={}; attendees.forEach(a=>byId[a.id]=a); }
+
+async function boot(){
+  if(!cfgOk()){ $("#needsConfig").classList.remove("hidden"); return; }
+  sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  const params=new URLSearchParams(location.search);
+  const joinCode=params.get("join");
+  if(joinCode){ mode="att"; await bootAttendee(joinCode.toUpperCase()); }
+  else { mode="org"; await bootOrganizer(); }
+  setInterval(tickClock,1000); setInterval(tickCountdown,250);
 }
-function nextRound(){
-  const pool = activePool();
-  if(pool.length<2){ toast("Not enough people present."); return; }
-  S.round++;
-  const assignment = buildAssignment(pool);
-  const qIndex = pickQuestion(S.round,false);
-  S.tables = assignment.map((members,idx)=>({ n:idx+1, members, qIndex }));
-  S.phase="transition";
-  startTimer("trans", S.settings.trans);
-  save(); render();
-}
-function startRoundNow(){
-  if(!S.tables.length) return;
-  recordMeetings(S.tables.map(t=>t.members));
-  S.phase="running";
-  startTimer("round", S.settings.round*60);
-  S.roundsSinceBreak++;
-  save(); render();
-}
-function endRoundNow(){
-  stopTimer();
-  // time for a break?
-  if(S.settings.breakEvery>0 && S.roundsSinceBreak>=S.settings.breakEvery){
-    startBreak(); return;
+
+/* ---------------- ORGANIZER ---------------- */
+async function bootOrganizer(){
+  $("#orgApp").classList.remove("hidden");
+  initSetupForm(); wireOrg();
+  org=JSON.parse(localStorage.getItem("sf_org")||"null");
+  if(org&&org.eventId){
+    const {data}=await sb.from("events").select("*").eq("id",org.eventId).maybeSingle();
+    if(data){ ev=data; await refetchAttendees(); subscribeOrg(); $("#newEvent").style.display="inline";
+      if(ev.phase!=="setup"){ switchTab("room"); } else { switchTab("people"); } renderOrg(); return; }
+    localStorage.removeItem("sf_org"); org=null;
   }
-  nextRound();
+  switchTab("setup");
 }
-function startBreak(){
-  S.phase="break"; S.roundsSinceBreak=0;
-  startTimer("break", S.settings.breakLen*60);
-  save(); render();
+async function refetchAttendees(){
+  const {data}=await sb.from("attendees").select("*").eq("event_id",ev.id).order("created_at");
+  attendees=data||[]; reindex();
 }
-function endBreak(){ stopTimer(); nextRound(); }
-function endEvent(){
-  stopTimer();
-  if(S.settings.closing){
-    // one reflection round: keep same tables, swap to a closing question
-    const qIndex = pickQuestion(S.round,true);
-    S.tables = S.tables.map(t=>({...t,qIndex}));
-    S.phase="running"; S.round=S.round; // stays
-    startTimer("round", S.settings.round*60);
-    S.settings.closing=false; // only once
+function subscribeOrg(){
+  sb.channel("att-"+ev.id).on("postgres_changes",{event:"*",schema:"public",table:"attendees",filter:"event_id=eq."+ev.id},
+    async()=>{ await refetchAttendees(); renderOrg(); }).subscribe();
+}
+async function pushEvent(patch){ Object.assign(ev,patch); await sb.from("events").update(patch).eq("id",ev.id); }
+
+function initSetupForm(){
+  const cat=$("#s_qcat"); cat.innerHTML=CATEGORIES.map(c=>`<option>${c}</option>`).join("");
+  $("#s_qmode").addEventListener("change",e=>$("#catWrap").style.display=e.target.value==="cat"?"block":"none");
+}
+function readSettings(){
+  return {name:$("#s_name").value.trim(),round:+$("#s_round").value||12,trans:+$("#s_trans").value||90,
+    breakEvery:+$("#s_breakevery").value||0,breakLen:+$("#s_breaklen").value||10,autostart:$("#s_autostart").checked,
+    qmode:$("#s_qmode").value,qcat:$("#s_qcat").value,teen:$("#s_teen").checked,spicy:$("#s_spicy").checked,closing:$("#s_closing").checked,
+    wayfind:$("#s_wayfind").value};
+}
+function wireOrg(){
+  $("#tabs").addEventListener("click",e=>{const b=e.target.closest("button[data-tab]");if(b)switchTab(b.dataset.tab);});
+  $("#createEvent").onclick=createEvent;
+  $("#newEvent").onclick=()=>{ if(confirm("Start a brand-new event? The current one stays saved in your database but you'll leave it.")){ localStorage.removeItem("sf_org"); location.href=location.pathname; } };
+  $("#addPerson").onclick=()=>addPerson($("#p_name"),$("#p_with"));
+  $("#p_name").addEventListener("keydown",e=>{if(e.key==="Enter")addPerson($("#p_name"),$("#p_with"));});
+  $("#startEvent").onclick=lockAndStart;
+  $("#d_saveSettings").onclick=async()=>{ const s={...ev.settings,round:+$("#d_round").value||ev.settings.round,trans:+$("#d_trans").value||ev.settings.trans,breakEvery:+$("#d_breakevery").value,breakLen:+$("#d_breaklen").value||ev.settings.breakLen}; await pushEvent({settings:s}); toast("Settings updated."); };
+  $("#d_reset").onclick=()=>{ if(confirm("End this event and start fresh?")){ localStorage.removeItem("sf_org"); location.href=location.pathname; } };
+}
+async function createEvent(){
+  const settings=readSettings();
+  const join_code=code4(), organizer_token=crypto.randomUUID?crypto.randomUUID():code4()+code4();
+  const {data,error}=await sb.from("events").insert({join_code,organizer_token,name:settings.name,settings,
+    phase:"setup",round:0,tables:[],met:{},used_q:[],rounds_since_break:0,timer:{}}).select().single();
+  if(error){ toast("Could not create event — check your keys."); console.error(error); return; }
+  ev=data; attendees=[]; reindex();
+  org={eventId:ev.id,token:organizer_token,joinCode:join_code}; localStorage.setItem("sf_org",JSON.stringify(org));
+  $("#newEvent").style.display="inline"; subscribeOrg(); switchTab("room"); renderOrg();
+  toast("Event created — project the Room tab.");
+}
+async function addPerson(nameEl,withEl){
+  const name=nameEl.value.trim(); if(!name){toast("Enter a name.");return;}
+  await sb.from("attendees").insert({event_id:ev.id,name,came_with:withEl.value.trim(),self_joined:false});
+  nameEl.value="";withEl.value="";nameEl.focus();
+}
+function poolForRound(roundNum){
+  return attendees.filter(a=>!a.away&&(a.on_break_until||0)<roundNum).map(a=>a.id);
+}
+async function lockAndStart(){
+  if(attendees.length<3){toast("Need at least 3 people.");return;}
+  await pushEvent({round:0,met:{},used_q:[],rounds_since_break:0});
+  await nextRound(); switchTab("room");
+}
+async function nextRound(){
+  const roundNum=(ev.round||0)+1;
+  const pool=poolForRound(roundNum);
+  if(pool.length<2){toast("Not enough people present.");return;}
+  const assignment=buildAssignment(pool,byId,ev.met||{});
+  const qIndex=pickQuestion(ev,roundNum,false);
+  const tables=assignment.map((members,i)=>({n:i+1,members,qIndex}));
+  const timer={mode:"trans",endsAt:Date.now()+ev.settings.trans*1000,running:true,remaining:ev.settings.trans};
+  await pushEvent({round:roundNum,tables,phase:"transition",timer,used_q:ev.used_q});
+  renderOrg();
+}
+async function startRoundNow(){
+  const met={...(ev.met||{})};
+  for(const t of ev.tables)for(let i=0;i<t.members.length;i++)for(let j=i+1;j<t.members.length;j++){const k=pkey(t.members[i],t.members[j]);met[k]=(met[k]||0)+1;}
+  const timer={mode:"round",endsAt:Date.now()+ev.settings.round*1000*60,running:true,remaining:ev.settings.round*60};
+  await pushEvent({phase:"running",timer,met,rounds_since_break:(ev.rounds_since_break||0)+1});
+  renderOrg();
+}
+async function endRoundNow(){
+  if(ev.settings.breakEvery>0&&(ev.rounds_since_break||0)>=ev.settings.breakEvery){ return startBreak(); }
+  await nextRound();
+}
+async function startBreak(){
+  const timer={mode:"break",endsAt:Date.now()+ev.settings.breakLen*1000*60,running:true,remaining:ev.settings.breakLen*60};
+  await pushEvent({phase:"break",timer,rounds_since_break:0}); renderOrg();
+}
+async function endBreak(){ await nextRound(); }
+async function endEvent(){
+  if(ev.settings.closing){
+    const qIndex=pickQuestion(ev,ev.round,true);
+    const tables=ev.tables.map(t=>({...t,qIndex}));
+    const timer={mode:"round",endsAt:Date.now()+ev.settings.round*1000*60,running:true,remaining:ev.settings.round*60};
+    await pushEvent({tables,phase:"running",timer,settings:{...ev.settings,closing:false},used_q:ev.used_q});
     toast("Reflection round — same tables, one last question.");
-  } else {
-    S.phase="ended";
-  }
-  save(); render();
+  } else { await pushEvent({phase:"ended",timer:{}}); }
+  renderOrg();
 }
+async function shuffleQuestion(){
+  const cur=ev.tables[0]?.qIndex;
+  ev.used_q=(ev.used_q||[]).filter(i=>i!==cur);
+  const qIndex=pickQuestion(ev,ev.round,false);
+  const tables=ev.tables.map(t=>({...t,qIndex}));
+  await pushEvent({tables,used_q:ev.used_q}); renderOrg(); toast("New question.");
+}
+/* timer controls (organizer authority) */
+async function pauseTimer(){ if(!ev.timer.running)return; const rem=Math.max(0,Math.round((ev.timer.endsAt-Date.now())/1000)); await pushEvent({timer:{...ev.timer,running:false,remaining:rem,endsAt:null}}); renderOrg(); }
+async function resumeTimer(){ if(ev.timer.running||ev.timer.remaining==null)return; await pushEvent({timer:{...ev.timer,running:true,endsAt:Date.now()+ev.timer.remaining*1000}}); renderOrg(); }
+async function addMinute(){ if(!ev.timer.mode)return; const base=ev.timer.running?ev.timer.endsAt:Date.now()+(ev.timer.remaining||0)*1000; await pushEvent({timer:{...ev.timer,endsAt:base+60000,remaining:(ev.timer.remaining||0)+60,running:ev.timer.running}}); }
 
-/* ---------- Timer ---------- */
-let tick;
-function startTimer(mode, seconds){
-  S.timer={running:true, mode, endsAt:Date.now()+seconds*1000, remaining:seconds};
-  runTick();
-}
-function runTick(){
-  clearInterval(tick);
-  tick=setInterval(()=>{
-    if(!S.timer.running) return;
-    const rem=Math.max(0, Math.round((S.timer.endsAt-Date.now())/1000));
-    S.timer.remaining=rem;
-    updateCountdown();
-    if(rem<=0){
-      clearInterval(tick);
-      const m=S.timer.mode; S.timer.running=false;
-      if(m==="round"){ endRoundNow(); }
-      else if(m==="break"){ toast("Break's over."); render(); }
-      else if(m==="trans"){ if(S.settings.autostart){ startRoundNow(); } else { render(); } }
-    }
-  },250);
-}
-function pauseTimer(){ if(!S.timer.running) return; S.timer.running=false; S.timer.remaining=Math.max(0,Math.round((S.timer.endsAt-Date.now())/1000)); clearInterval(tick); save(); render(); }
-function resumeTimer(){ if(S.timer.running||S.timer.remaining==null) return; S.timer.endsAt=Date.now()+S.timer.remaining*1000; S.timer.running=true; runTick(); render(); }
-function addMinute(){ if(S.timer.mode==null) return; S.timer.endsAt=(S.timer.running?S.timer.endsAt:Date.now()+ (S.timer.remaining||0)*1000)+60000; S.timer.remaining=(S.timer.remaining||0)+60; updateCountdown(); save(); }
-function stopTimer(){ S.timer={running:false,endsAt:null,remaining:null,mode:null}; clearInterval(tick); }
-function fmt(s){ s=Math.max(0,s|0); const m=(s/60)|0, ss=s%60; return m+":"+String(ss).padStart(2,"0"); }
-
-/* ---------- Rendering ---------- */
+/* organizer render */
 function switchTab(tab){
   document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));
-  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
-  $("#view-"+tab).classList.add("active");
-  render();
+  document.querySelectorAll("#orgApp .view").forEach(v=>v.classList.remove("active"));
+  $("#view-"+tab).classList.add("active"); renderOrg();
 }
-function phaseLabel(){
-  return {setup:"Setup",running:"Round "+S.round,transition:"Move time",break:"Break",ended:"Wrapped up"}[S.phase]||"Setup";
-}
-function render(){
+function phaseLabel(){return {setup:"Setup",running:"Round "+ev?.round,transition:"Move time",break:"Break",ended:"Wrapped up"}[ev?.phase]||"Setup";}
+function renderOrg(){
+  if(mode!=="org"||!ev)return;
   $("#phasePill").innerHTML="Phase: <b>"+phaseLabel()+"</b>";
-  renderPeople(); renderRoom(); renderDash();
+  if($("#view-setup").classList.contains("active")) fillSetup();
+  renderRosterPeople(); renderRoom(); renderDash();
 }
-
-/* People roster + coverage */
-function renderPeople(){
-  const r=$("#roster"); r.innerHTML="";
-  S.people.forEach(p=>r.appendChild(personRow(p,false)));
-  $("#peopleCount").textContent = S.people.length+" "+(S.people.length===1?"person":"people");
-  // coverage estimate
-  const n=S.people.length;
-  const hint=$("#coverageHint");
-  if(n<3){ hint.innerHTML="Add at least <b>3 people</b> to begin."; }
-  else{
-    const per=3; // ~new people met per round (group of 4)
-    const roundsForAll=Math.ceil((n-1)/per);
-    const evMin = roundsForAll*(S.settings.round + Math.ceil(S.settings.trans/60))
-                + (S.settings.breakEvery>0 ? Math.floor(roundsForAll/S.settings.breakEvery)*S.settings.breakLen : 0);
-    hint.innerHTML = `With <b>${n} people</b> in groups of 4, each round you meet ~3 new people. `+
-      `Meeting everyone once would take about <b>${roundsForAll} rounds</b> — roughly <b>${Math.round(evMin/5)*5} min</b> with breaks. `+
-      `Most nights run fewer rounds; the app just maximizes unique meetings in the time you have.`;
-  }
+function fillSetup(){
+  const s=ev.settings;
+  $("#s_name").value=s.name||"";$("#s_round").value=s.round;$("#s_trans").value=s.trans;
+  $("#s_breakevery").value=s.breakEvery;$("#s_breaklen").value=s.breakLen;$("#s_autostart").checked=s.autostart;
+  $("#s_qmode").value=s.qmode;$("#catWrap").style.display=s.qmode==="cat"?"block":"none";$("#s_qcat").value=s.qcat;
+  $("#s_teen").checked=s.teen;$("#s_spicy").checked=s.spicy;$("#s_closing").checked=s.closing;
+  $("#s_wayfind").value=s.wayfind||"colors";
+  $("#createEvent").textContent = ev.phase==="setup" ? "Create event & open doors →" : "Event is live ✓";
+  $("#createEvent").disabled = ev.phase!=="setup";
 }
-function personRow(p, dash){
-  const el=document.createElement("div");
-  el.className="person"+(p.away?" away":"");
-  const av=document.createElement("div"); av.className="avatar"; av.style.background=colorFor(p.id); av.textContent=initials(p.name);
+function renderRosterPeople(){
+  const r=$("#roster");if(!r)return;r.innerHTML="";
+  attendees.forEach(p=>r.appendChild(personRow(p,false)));
+  $("#peopleCount").textContent=attendees.length+" "+(attendees.length===1?"person":"people");
+  const n=attendees.length,h=$("#coverageHint");
+  if(n<3)h.innerHTML="Waiting for people to join… you need at least <b>3</b>.";
+  else{const rounds=Math.ceil((n-1)/3);h.innerHTML=`<b>${n} people</b> in. Meeting everyone once ≈ <b>${rounds} rounds</b>. The app maximizes unique meetings in the time you run.`;}
+}
+function personRow(p,dash){
+  const el=document.createElement("div");el.className="person"+(p.away?" away":"");
+  const av=document.createElement("div");av.className="avatar";av.style.background=colorFor(p.id);av.textContent=initials(p.name);
   const meta=document.createElement("div");
-  meta.innerHTML=`<div class="nm">${escapeHtml(p.name)}</div>`+(p.with?`<div class="with">with “${escapeHtml(p.with)}”</div>`:"");
-  el.append(av,meta);
-  const sp=document.createElement("div"); sp.className="spacer"; el.append(sp);
+  meta.innerHTML=`<div class="nm">${esc(p.name)}</div>`+(p.came_with?`<div class="with">with “${esc(p.came_with)}”</div>`:"");
+  el.append(av,meta);const sp=document.createElement("div");sp.className="spacer";el.append(sp);
   if(dash){
-    const met = uniqueMetCount(p.id);
-    const badge=document.createElement("span"); badge.className="pill"; badge.textContent=met+" met";
-    el.append(badge);
-    const away=document.createElement("button"); away.className="btn sm "+(p.away?"gold":"ghost");
-    away.textContent=p.away?"Away":"Here";
-    away.onclick=()=>{ p.away=!p.away; save(); render(); };
-    el.append(away);
+    const here=(p.tapped_round||0)===ev.round&&ev.phase==="running";
+    if(ev.phase==="running"){const b=document.createElement("span");b.className="pill "+(here?"teal":"gold");b.textContent=here?"✓ here":"…seating";el.append(b);}
+    if((p.on_break_until||0)>ev.round){const b=document.createElement("span");b.className="pill gold";b.textContent="on break";el.append(b);}
+    const away=document.createElement("button");away.className="btn sm "+(p.away?"gold":"ghost");away.textContent=p.away?"Away":"Here";
+    away.onclick=async()=>{await sb.from("attendees").update({away:!p.away}).eq("id",p.id);};el.append(away);
   }
-  const del=document.createElement("button"); del.className="icon-btn"; del.innerHTML="&times;"; del.title="Remove";
-  del.onclick=()=>{ if(confirm("Remove "+p.name+"?")){ S.people=S.people.filter(x=>x.id!==p.id); save(); render(); } };
-  el.append(del);
+  const del=document.createElement("button");del.className="icon-btn";del.innerHTML="&times;";
+  del.onclick=async()=>{if(confirm("Remove "+p.name+"?"))await sb.from("attendees").delete().eq("id",p.id);};el.append(del);
   return el;
 }
-function uniqueMetCount(id){ let c=0; for(const k in S.met){ if(S.met[k]>0){ const [a,b]=k.split("|"); if(a===id||b===id) c++; } } return c; }
-function escapeHtml(s){ return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
-
-/* Room / projector */
+function joinUrl(){return location.origin+location.pathname+"?join="+ev.join_code;}
 function renderRoom(){
-  const stage=$("#roomStage"), bar=$("#controlbar");
-  if(!S.started){
-    stage.innerHTML=`<div class="room-empty"><div><div class="big">Ready when you are</div><div>Add people on the <b>People</b> tab, then lock the pool to build round 1.</div></div></div>`;
-    bar.innerHTML=`<button class="btn primary" onclick="switchTab('people')">Go to People →</button>`;
-    return;
-  }
-  if(S.phase==="ended"){
-    stage.innerHTML=`<div class="room-empty"><div><div class="big">That's a wrap 🎉</div><div>Thanks for coming — go make plans with your new friends.</div></div></div>`;
-    bar.innerHTML=`<button class="btn ghost" onclick="switchTab('dash')">See the dashboard</button>
-      <div class="spacer"></div><button class="danger-link" onclick="doReset()">Reset event</button>`;
-    return;
-  }
-  if(S.phase==="break"){
-    stage.innerHTML=`<div class="room-break"><div>
-        <div class="big">Break time ☕</div>
-        <div class="cd" id="cd">${fmt(S.timer.remaining||0)}</div>
-        <div style="color:#cfc7d4;margin-top:10px;">Grab a drink — back in a few minutes.</div>
-      </div></div>`;
-    bar.innerHTML = timerControls() + `<div class="spacer"></div>
-      <button class="btn teal" onclick="endBreak()">End break & start next round</button>`;
-    return;
-  }
-  // running or transition
-  const q = QUESTIONS[S.tables[0]?.qIndex];
-  const moving = S.phase==="transition";
-  stage.innerHTML = `
-    <div class="room-top">
-      <div class="round-label">${moving?"Move to your next table":"Round "+S.round}</div>
-      <div class="countdown ${S.timer.running?'':'paused'} ${((S.timer.remaining||0)<=30&&S.phase==='running')?'warn':''}" id="cd">${fmt(S.timer.remaining||0)}</div>
-    </div>
-    <div class="qcard">
-      <div class="qk">${moving?"Coming up":"Talk about"} · ${q?escapeHtml(q.t):""}</div>
-      <div class="qt">${q?escapeHtml(q.q):""}</div>
-    </div>
-    <div class="tables">
-      ${S.tables.map(t=>`
-        <div class="table-card">
-          <h4><span class="tnum">${t.n}</span> Table ${t.n}</h4>
-          <ul>${t.members.map(id=>`<li>${escapeHtml(personById(id)?.name||"?")}</li>`).join("")}</ul>
-        </div>`).join("")}
-    </div>`;
-  // control bar
-  if(moving){
-    bar.innerHTML = `
-      <div class="grp">
-        <button class="btn primary" onclick="startRoundNow()">▶ Start round ${S.round}</button>
-        <button class="btn ghost" onclick="shuffleQuestion()">↻ Shuffle question</button>
-      </div>
-      <div class="spacer"></div>
-      <span class="pill gold">Waiting for people to sit down</span>`;
-  } else {
-    bar.innerHTML = `
-      <div class="grp">${timerControls()}
-        <button class="btn ghost sm" onclick="shuffleQuestion()">↻ Question</button>
-      </div>
-      <div class="spacer"></div>
-      <div class="grp">
-        <button class="btn ghost sm" onclick="startBreak()">Break now</button>
-        <button class="btn primary" onclick="endRoundNow()">End round →</button>
-        <button class="btn ghost sm" onclick="endEvent()">End event</button>
+  const stage=$("#roomStage"),bar=$("#controlbar");if(!stage)return;
+  if(ev.phase==="setup"){
+    stage.innerHTML=`<div style="text-align:center;"><div class="round-label" style="margin-bottom:6px;">Scan to join</div>
+      <div class="joinbox"><canvas id="qrBig"></canvas><div><div class="joincode">${ev.join_code}</div>
+      <div class="joinurl">${esc(joinUrl())}</div>
+      <div style="color:#cfc7d4;margin-top:10px;">${attendees.length} joined so far</div></div></div>
+      ${wf()==="colors"?`<div style="color:#cfc7d4;margin-top:16px;font-size:14px;max-width:46ch;margin-left:auto;margin-right:auto;">Set out your coloured spots around the room — red, blue, yellow, green… Each round, people are sent to a colour.</div>`:""}
       </div>`;
+    drawQR("qrBig",joinUrl(),200);
+    bar.innerHTML=`<button class="btn teal" onclick="lockAndStart()">Lock pool & start round 1 →</button>
+      <div class="spacer"></div><span class="pill berry">${attendees.length} people</span>`;
+    return;
+  }
+  if(ev.phase==="ended"){
+    stage.innerHTML=`<div class="room-empty"><div><div class="big">That's a wrap 🎉</div><div>Go make plans with your new friends.</div></div></div>`;
+    bar.innerHTML=`<button class="btn ghost" onclick="switchTab('dash')">See the dashboard</button>`;return;
+  }
+  if(ev.phase==="break"){
+    stage.innerHTML=`<div class="room-break"><div><div class="big">Break time ☕</div><div class="cd" data-cd>${fmt(remaining())}</div>
+      <div style="color:#cfc7d4;margin-top:10px;">Back in a few minutes.</div></div></div>`;
+    bar.innerHTML=timerControls()+`<div class="spacer"></div><button class="btn teal" onclick="endBreak()">End break & start next round</button>`;return;
+  }
+  const moving=ev.phase==="transition",q=QUESTIONS[ev.tables[0]?.qIndex];
+  const moveLabel = moving ? (wf()==="colors"?"Move — find your colour":"Move to your next table") : "Round "+ev.round;
+  stage.innerHTML=`
+    <div class="room-top"><div class="round-label">${moveLabel}</div>
+      <div class="countdown ${ev.timer.running?'':'paused'}" data-cd>${fmt(remaining())}</div></div>
+    <div class="qcard"><div class="qk">${moving?"Coming up":"Talk about"} · ${q?esc(q.t):""}</div><div class="qt">${q?esc(q.q):""}</div></div>
+    <div class="tables">${ev.tables.map(t=>{
+      const sp=spotFor(t.n), tc=sp?sp.text:null;
+      const cardStyle=sp?`style="background:${sp.hex};border-color:rgba(255,255,255,.28);"`:"";
+      const head=sp?`<span class="tnum" style="background:rgba(0,0,0,.2);color:${tc}">${t.n}</span> <span style="color:${tc}">${sp.name}</span>`
+                   :`<span class="tnum">${t.n}</span> Table ${t.n}`;
+      return `<div class="table-card" ${cardStyle}><h4 ${sp?`style="color:${tc}"`:""}>${head}</h4>
+        <ul>${t.members.map(id=>{const a=byId[id];const here=(a?.tapped_round||0)===ev.round&&ev.phase==="running";
+          return `<li ${sp?`style="color:${tc}"`:""}>${here?`<span class="tick" ${sp?`style="color:${tc}"`:""}>✓</span>`:`<span class="wait" ${sp?`style="color:${tc};opacity:.6"`:""}>•</span>`} ${esc(a?.name||"?")}</li>`;}).join("")}</ul></div>`;
+    }).join("")}</div>`;
+  if(moving){
+    bar.innerHTML=`<div class="grp"><button class="btn primary" onclick="startRoundNow()">▶ Start round ${ev.round}</button>
+      <button class="btn ghost" onclick="shuffleQuestion()">↻ Shuffle question</button></div>
+      <div class="spacer"></div><span class="pill gold">People are moving…</span>`;
+  }else{
+    bar.innerHTML=`<div class="grp">${timerControls()}<button class="btn ghost sm" onclick="shuffleQuestion()">↻ Question</button></div>
+      <div class="spacer"></div><div class="grp"><button class="btn ghost sm" onclick="startBreak()">Break now</button>
+      <button class="btn primary" onclick="endRoundNow()">End round →</button>
+      <button class="btn ghost sm" onclick="endEvent()">End event</button></div>`;
   }
 }
-function timerControls(){
-  const running=S.timer.running;
-  return `<button class="btn ghost sm" onclick="${running?'pauseTimer()':'resumeTimer()'}">${running?'❚❚ Pause':'▶ Resume'}</button>
-          <button class="btn ghost sm" onclick="addMinute()">+1 min</button>`;
-}
-function updateCountdown(){ const el=$("#cd"); if(el) el.textContent=fmt(S.timer.remaining||0);
-  const cd=document.querySelector(".countdown"); if(cd){ cd.classList.toggle("warn",(S.timer.remaining||0)<=30 && S.phase==="running"); cd.classList.toggle("paused",!S.timer.running);} }
-function shuffleQuestion(){ // replace current question with another from the pool
-  const closing=false;
-  // free up the current one so it can be reused later, pick a new one
-  const cur=S.tables[0]?.qIndex;
-  S.usedQ=S.usedQ.filter(i=>i!==cur);
-  const qIndex=pickQuestion(S.round,closing);
-  S.tables=S.tables.map(t=>({...t,qIndex}));
-  save(); renderRoom(); toast("New question.");
-}
-
-/* Dashboard */
+function timerControls(){const r=ev.timer.running;return `<button class="btn ghost sm" onclick="${r?'pauseTimer()':'resumeTimer()'}">${r?'❚❚ Pause':'▶ Resume'}</button><button class="btn ghost sm" onclick="addMinute()">+1 min</button>`;}
 function renderDash(){
-  // stats
-  const present=S.people.filter(p=>!p.away).length;
-  const totalPairs=S.people.length*(S.people.length-1)/2;
-  const metPairs=Object.values(S.met).filter(v=>v>0).length;
-  const cov = totalPairs? Math.round(metPairs/totalPairs*100):0;
-  $("#stats").innerHTML=`
-    <div class="stat"><div class="v">${S.round||0}</div><div class="l">rounds run</div></div>
+  if(!$("#stats"))return;
+  const present=attendees.filter(a=>!a.away).length;
+  const total=attendees.length*(attendees.length-1)/2;
+  const metPairs=Object.values(ev.met||{}).filter(v=>v>0).length;
+  const cov=total?Math.round(metPairs/total*100):0;
+  $("#stats").innerHTML=`<div class="stat"><div class="v">${ev.round||0}</div><div class="l">rounds run</div></div>
     <div class="stat"><div class="v">${present}</div><div class="l">people here now</div></div>
     <div class="stat"><div class="v">${metPairs}</div><div class="l">connections made</div></div>
-    <div class="stat"><div class="v">${cov}%</div><div class="l">of all possible pairs met<div class="bar"><i style="width:${cov}%"></i></div></div></div>`;
-  const r=$("#dashRoster"); r.innerHTML="";
-  S.people.forEach(p=>r.appendChild(personRow(p,true)));
-  $("#dashCount").textContent = "· "+S.people.length+" total";
-  // settings fields
-  $("#d_round").value=S.settings.round; $("#d_trans").value=S.settings.trans;
-  $("#d_breakevery").value=S.settings.breakEvery; $("#d_breaklen").value=S.settings.breakLen;
+    <div class="stat"><div class="v">${cov}%</div><div class="l">of all pairs met<div class="bar"><i style="width:${cov}%"></i></div></div></div>`;
+  const r=$("#dashRoster");r.innerHTML="";attendees.forEach(p=>r.appendChild(personRow(p,true)));
+  $("#dashCount").textContent="· "+attendees.length+" total";
+  $("#d_round").value=ev.settings.round;$("#d_trans").value=ev.settings.trans;
+  $("#d_breakevery").value=ev.settings.breakEvery;$("#d_breaklen").value=ev.settings.breakLen;
 }
 
-/* ---------- Wiring ---------- */
-function initSetupForm(){
-  const s=S.settings;
-  $("#s_name").value=s.name; $("#s_tables").value=s.tables; $("#s_round").value=s.round;
-  $("#s_trans").value=s.trans; $("#s_breakevery").value=s.breakEvery; $("#s_breaklen").value=s.breakLen;
-  $("#s_autostart").checked=s.autostart; $("#s_qmode").value=s.qmode;
-  $("#s_teen").checked=s.teen; $("#s_spicy").checked=s.spicy; $("#s_closing").checked=s.closing;
-  const cat=$("#s_qcat"); cat.innerHTML=CATEGORIES.map(c=>`<option ${c===s.qcat?"selected":""}>${c}</option>`).join("");
-  $("#catWrap").style.display = s.qmode==="cat" ? "block":"none";
+/* ---------------- ATTENDEE ---------------- */
+async function bootAttendee(joinCode){
+  $("#attApp").classList.remove("hidden");
+  const {data}=await sb.from("events").select("*").eq("join_code",joinCode).maybeSingle();
+  if(!data){ $("#attStage").innerHTML=`<div class="att-center"><div class="em">🤔</div><div class="big">Event not found</div><p class="sub" style="margin:0 auto;">Double-check the code or ask the host for a fresh QR.</p></div>`; return; }
+  ev=data; myAttId=localStorage.getItem("sf_att_"+ev.id);
+  await refetchAttendees();
+  sb.channel("ev-"+ev.id).on("postgres_changes",{event:"*",schema:"public",table:"events",filter:"id=eq."+ev.id},
+    p=>{ ev=p.new; renderAtt(); }).subscribe();
+  sb.channel("attlist-"+ev.id).on("postgres_changes",{event:"*",schema:"public",table:"attendees",filter:"event_id=eq."+ev.id},
+    async()=>{ await refetchAttendees(); renderAtt(); }).subscribe();
+  renderAtt();
 }
-$("#s_qmode").addEventListener("change",e=>{ $("#catWrap").style.display=e.target.value==="cat"?"block":"none"; });
-$("#saveSetup").onclick=()=>{
-  const s=S.settings;
-  s.name=$("#s_name").value.trim(); s.tables=+$("#s_tables").value||12;
-  s.round=+$("#s_round").value||12; s.trans=+$("#s_trans").value||90;
-  s.breakEvery=+$("#s_breakevery").value||0; s.breakLen=+$("#s_breaklen").value||10;
-  s.autostart=$("#s_autostart").checked; s.qmode=$("#s_qmode").value; s.qcat=$("#s_qcat").value;
-  s.teen=$("#s_teen").checked; s.spicy=$("#s_spicy").checked; s.closing=$("#s_closing").checked;
-  save(); toast("Saved."); switchTab("people");
-};
-$("#resetAll").onclick=doReset;
-function doReset(){ if(confirm("Reset everything — settings and all people? This can't be undone.")){ stopTimer(); S=freshState(); save(); initSetupForm(); switchTab("setup"); toast("Fresh start."); } }
-
-function addPersonFrom(nameEl,withEl){
-  const name=nameEl.value.trim(); if(!name){ toast("Enter a name."); return; }
-  S.people.push({id:uid(),name,with:withEl.value.trim(),away:false});
-  nameEl.value=""; withEl.value=""; nameEl.focus(); save(); render();
+function myTable(){ return (ev.tables||[]).find(t=>t.members.includes(myAttId)); }
+function me(){ return byId[myAttId]; }
+async function joinAsAttendee(name,cw){
+  if(!name.trim())return;
+  const {data}=await sb.from("attendees").insert({event_id:ev.id,name:name.trim(),came_with:cw.trim(),self_joined:true}).select().single();
+  myAttId=data.id; localStorage.setItem("sf_att_"+ev.id,myAttId); await refetchAttendees(); renderAtt();
 }
-$("#addPerson").onclick=()=>addPersonFrom($("#p_name"),$("#p_with"));
-$("#p_name").addEventListener("keydown",e=>{ if(e.key==="Enter") addPersonFrom($("#p_name"),$("#p_with")); });
-$("#p_with").addEventListener("keydown",e=>{ if(e.key==="Enter") addPersonFrom($("#p_name"),$("#p_with")); });
-$("#startEvent").onclick=startEvent;
-
-$("#d_add").onclick=()=>addPersonFrom($("#d_name"),$("#d_with"));
-$("#d_name").addEventListener("keydown",e=>{ if(e.key==="Enter") addPersonFrom($("#d_name"),$("#d_with")); });
-$("#d_saveSettings").onclick=()=>{
-  S.settings.round=+$("#d_round").value||S.settings.round;
-  S.settings.trans=+$("#d_trans").value||S.settings.trans;
-  S.settings.breakEvery=+$("#d_breakevery").value; S.settings.breakLen=+$("#d_breaklen").value||S.settings.breakLen;
-  save(); toast("Settings updated."); 
-};
-$("#d_reset").onclick=doReset;
-
-$("#tabs").addEventListener("click",e=>{ const b=e.target.closest("button[data-tab]"); if(b) switchTab(b.dataset.tab); });
-
-/* clock */
-setInterval(()=>{ const d=new Date(); $("#clock").textContent=d.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}); },1000);
-
-/* resume timer if page was reloaded mid-round */
-function resumeAfterLoad(){
-  if(S.timer && S.timer.mode && S.timer.remaining!=null){
-    if(S.timer.running && S.timer.endsAt){ runTick(); }
+async function tapHere(){ await sb.from("attendees").update({tapped_round:ev.round}).eq("id",myAttId); }
+async function requestBreak(rounds){
+  const present=attendees.filter(a=>!a.away).length;
+  const cap=Math.max(1,Math.floor(present*MAX_BREAK_PCT));
+  const outNext=attendees.filter(a=>(a.on_break_until||0)>ev.round).length;
+  if(outNext>=cap){ toast("Lots of people are on break right now — try after the next round."); return; }
+  await sb.from("attendees").update({on_break_until:ev.round+rounds}).eq("id",myAttId); toast("Break booked — enjoy!");
+}
+function showInvite(){
+  const o=document.createElement("div");o.className="overlay";
+  o.innerHTML=`<div class="sheet"><h3 style="margin-bottom:6px;">Invite a friend</h3>
+    <p class="sub" style="margin:0 auto 14px;">Let them scan this to join.</p><canvas id="qrInv"></canvas>
+    <div class="joincode" style="color:var(--berry-ink);margin-top:8px;">${ev.join_code}</div>
+    <button class="btn ghost block" style="margin-top:14px;" onclick="this.closest('.overlay').remove()">Close</button></div>`;
+  o.addEventListener("click",e=>{if(e.target===o)o.remove();});
+  document.body.appendChild(o); drawQR("qrInv",joinUrl(),180);
+}
+function renderAtt(){
+  const s=$("#attStage");
+  if(!myAttId||!me()){
+    s.innerHTML=`<div class="att-hero"><div class="att-round">${esc(ev.name||"Speed Friending")}</div>
+      <div style="font-family:'Baloo 2';font-weight:800;font-size:28px;">You're invited 👋</div>
+      <p style="color:#cfc7d4;margin:8px 0 0;">Pop your name in to join the pool.</p></div>
+      <div class="card" style="margin-top:16px;">
+        <label class="field"><span>Your name</span><input type="text" id="a_name" placeholder="e.g. Sam" autocomplete="off"></label>
+        <label class="field"><span>Came with someone? <small>(optional)</small></span><input type="text" id="a_with" placeholder="their name — you won't be paired together"></label>
+        <button class="btn primary block" id="a_join">Join the event</button></div>`;
+    $("#a_join").onclick=()=>joinAsAttendee($("#a_name").value,$("#a_with").value);
+    $("#a_name").addEventListener("keydown",e=>{if(e.key==="Enter")joinAsAttendee($("#a_name").value,$("#a_with").value);});
+    return;
+  }
+  if(ev.phase==="setup"){
+    s.innerHTML=`<div class="att-hero"><div class="att-round">You're in! ✨</div>
+      <div style="font-family:'Baloo 2';font-weight:800;font-size:26px;">Hey ${esc(me().name.split(" ")[0])}</div>
+      <p style="color:#cfc7d4;margin:8px 0 0;">Waiting for the host to start. Sit tight — and pull in anyone still by the door.</p></div>
+      <button class="btn teal block" style="margin-top:16px;" onclick="showInvite()">Invite others</button>
+      <div class="att-center" style="color:var(--muted);">${attendees.length} people here so far</div>`;
+    return;
+  }
+  if(ev.phase==="ended"){
+    s.innerHTML=`<div class="att-center"><div class="em">🎉</div><div class="big">Thanks for coming!</div><p class="sub" style="margin:0 auto;">Hope you found a new friend or two. See you next time.</p></div>`;return;
+  }
+  if(ev.phase==="break"){
+    s.innerHTML=`<div class="att-center"><div class="em">☕</div><div class="big">Break time</div>
+      <div class="att-cd" data-cd style="font-size:26px;color:var(--berry-ink);">${fmt(remaining())}</div>
+      <p class="sub" style="margin:10px auto 0;">Stretch, grab a drink. We'll call you back.</p></div>`;return;
+  }
+  const t=myTable();
+  if(!t){ s.innerHTML=`<div class="att-center"><div class="em">🙂</div><div class="big">Sitting this round out</div><p class="sub" style="margin:0 auto;">You'll be back in the mix next round.</p></div>`; return; }
+  const q=QUESTIONS[t.qIndex],moving=ev.phase==="transition",tapped=(me().tapped_round||0)===ev.round;
+  const sp=spotFor(t.n), useColor=wf()==="colors"&&sp;
+  const membersHtml=t.members.map(id=>{const a=byId[id];const isMe=id===myAttId;
+    return `<div class="att-member${isMe?' me':''}"><span class="avatar" style="background:${colorFor(id)}">${initials(a?.name)}</span>${esc(isMe?'You':(a?.name||'?'))}</div>`;}).join("");
+  const actions=`<div class="att-actions"><button class="btn ghost" onclick="requestBreak(1)">Need a break</button><button class="btn ghost" onclick="showInvite()">Invite others</button></div>`;
+  const tapBtn=`<button class="tap-btn ${tapped?'done':''}" onclick="tapHere()">${tapped?"✓ You're here":("I'm at the "+(useColor?esc(sp.name)+" spot":"table"))}</button>`;
+  if(useColor){
+    const qCard=`<div class="card" style="margin-top:14px;"><div style="font-size:12.5px;font-weight:700;color:var(--muted);margin-bottom:6px;">${moving?"Coming up":"Talk about"} · ${q?esc(q.t):""}</div><div style="font-family:'Baloo 2';font-weight:600;font-size:19px;line-height:1.2;">${q?esc(q.q):""}</div></div>`;
+    s.innerHTML=`
+      <div class="att-hero" style="background:${sp.hex};">
+        <div class="att-round" style="color:${sp.text};opacity:.85">${moving?"Go find":"You're at"}</div>
+        <div class="att-table" style="color:${sp.text}">${esc(sp.name)}</div>
+        <div class="att-cd" style="color:${sp.text};opacity:.85" data-cd>${moving?"starting soon":fmt(remaining())+" left"}</div>
+      </div>
+      ${qCard}
+      <div class="att-members">${membersHtml}</div>
+      ${moving?`<div class="att-center" style="color:var(--muted);padding:14px 0;">Find the <b style="color:var(--ink)">${esc(sp.name.toLowerCase())}</b> spot and grab a seat.</div>`:tapBtn}
+      ${actions}`;
+  } else {
+    s.innerHTML=`
+      <div class="att-hero">
+        <div class="att-round">${moving?"Head to":"You're at"}</div>
+        <div class="att-table">Table ${t.n}</div>
+        <div class="att-cd" data-cd>${moving?"starting soon":fmt(remaining())+" left"}</div>
+        <div class="att-q"><div class="k">${moving?"Coming up":"Talk about"} · ${q?esc(q.t):""}</div><div class="t">${q?esc(q.q):""}</div></div>
+      </div>
+      <div class="att-members">${membersHtml}</div>
+      ${moving?`<div class="att-center" style="color:var(--muted);padding:20px 0;">Find your seat — the host will start the round.</div>`:tapBtn}
+      ${actions}`;
   }
 }
 
-/* boot */
-initSetupForm();
-render();
-resumeAfterLoad();
-if(S.started && S.phase!=="setup"){ switchTab("room"); }
+/* ---------------- shared: countdown, qr, clock ---------------- */
+function remaining(){ if(!ev||!ev.timer||!ev.timer.mode)return 0; if(ev.timer.running&&ev.timer.endsAt)return Math.max(0,Math.round((ev.timer.endsAt-Date.now())/1000)); return ev.timer.remaining||0; }
+function tickCountdown(){
+  const rem=remaining();
+  document.querySelectorAll("[data-cd]").forEach(el=>{ el.textContent = (mode==="att"&&ev&&ev.phase==="transition")? "starting soon" : (mode==="att"&&ev&&(ev.phase==="running"))? fmt(rem)+" left" : fmt(rem); });
+  const cd=document.querySelector(".countdown"); if(cd&&ev){cd.classList.toggle("warn",rem<=30&&ev.phase==="running");cd.classList.toggle("paused",!ev.timer.running);}
+  // organizer authority: when round timer hits 0, advance
+  if(mode==="org"&&ev&&ev.timer&&ev.timer.running&&ev.timer.endsAt&&rem<=0){
+    ev.timer.running=false; // guard against double fire
+    const m=ev.timer.mode;
+    if(m==="round")endRoundNow(); else if(m==="trans"&&ev.settings.autostart)startRoundNow(); else if(m==="break"){toast("Break's over.");}
+  }
+}
+function drawQR(id,text,size){ const el=document.getElementById(id); if(el&&window.QRCode){ QRCode.toCanvas(el,text,{width:size,margin:1,color:{dark:"#2B2430",light:"#ffffff"}},()=>{}); } }
+function tickClock(){ const c=$("#clock"); if(c)c.textContent=new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}); }
+
+boot();
 </script>
 </body>
 </html>
