@@ -720,8 +720,8 @@ function personRow(p,dash){
   meta.innerHTML=`<div class="nm">${p.country?flagEmoji(p.country)+' ':''}${esc(p.name)}</div>`+(p.country?`<div class="with">${esc(countryName(p.country))}</div>`:"")+(p.came_with?`<div class="with">with “${esc(p.came_with)}”</div>`:"");
   el.append(av,meta);const sp=document.createElement("div");sp.className="spacer";el.append(sp);
   if(dash){
-    const here=(p.tapped_round||0)===ev.round&&ev.phase==="running";
-    if(ev.phase==="running"){const b=document.createElement("span");b.className="pill "+(here?"teal":"gold");b.textContent=here?"✓ here":"…seating";el.append(b);}
+    const here=(p.tapped_round||0)===ev.round;
+    if(ev.phase==="running"||ev.phase==="transition"){const b=document.createElement("span");b.className="pill "+(here?"teal":"gold");b.textContent=here?"✓ here":(ev.phase==="transition"?"moving…":"…seating");el.append(b);}
     if((p.on_break_until||0)>ev.round){const b=document.createElement("span");b.className="pill gold";b.textContent="on break";el.append(b);}
     const away=document.createElement("button");away.className="btn sm "+(p.away?"gold":"ghost");away.textContent=p.away?"Away":"Here";
     away.onclick=async()=>{await sb.from("attendees").update({away:!p.away}).eq("id",p.id);};el.append(away);
@@ -766,13 +766,15 @@ function renderRoom(){
       const head=sp?`<span class="tnum" style="background:rgba(0,0,0,.2);color:${tc}">${t.n}</span> <span style="color:${tc}">${sp.name}</span>`
                    :`<span class="tnum">${t.n}</span> Table ${t.n}`;
       return `<div class="table-card" ${cardStyle}><h4 ${sp?`style="color:${tc}"`:""}>${head}</h4>
-        <ul>${t.members.map(id=>{const a=byId[id];const here=(a?.tapped_round||0)===ev.round&&ev.phase==="running";
+        <ul>${t.members.map(id=>{const a=byId[id];const here=(a?.tapped_round||0)===ev.round;
           return `<li ${sp?`style="color:${tc}"`:""}>${here?`<span class="tick" ${sp?`style="color:${tc}"`:""}>✓</span>`:`<span class="wait" ${sp?`style="color:${tc};opacity:.6"`:""}>•</span>`} ${a?.country?flagEmoji(a.country)+' ':''}${esc(a?.name||"?")}</li>`;}).join("")}</ul></div>`;
     }).join("")}</div>`;
   if(moving){
+    const totalIn=ev.tables.reduce((s,t)=>s+t.members.length,0);
+    const seatedIn=ev.tables.reduce((s,t)=>s+t.members.filter(id=>(byId[id]?.tapped_round||0)===ev.round).length,0);
     bar.innerHTML=`<div class="grp"><button class="btn primary" onclick="startRoundNow()">▶ Start round ${ev.round}</button>
       <button class="btn ghost sm" onclick="showJoinQR()">Show join QR</button></div>
-      <div class="spacer"></div><span class="pill gold">People are moving…</span>`;
+      <div class="spacer"></div><span class="pill ${(seatedIn>=totalIn&&totalIn>0)?'teal':'gold'}">${seatedIn}/${totalIn} at their spot</span>`;
   }else{
     bar.innerHTML=`<div class="grp">${timerControls()}<button class="btn ghost sm" onclick="showJoinQR()">Join QR</button></div>
       <div class="spacer"></div><div class="grp"><button class="btn ghost sm" onclick="startBreak()">Break now</button>
@@ -905,7 +907,7 @@ function renderAtt(){
   const actions=`<div class="att-actions">${breakBtn}<button class="btn ghost" style="flex:1" onclick="showInvite()">Invite others</button></div>`;
   const breakNote = onBreak ? `<div style="text-align:center;color:#9a6b00;font-size:12.5px;margin-top:8px;">You won't be paired next round. Changed your mind? Tap the button above to undo.</div>`
     : `<div style="text-align:center;color:var(--muted);font-size:12.5px;margin-top:8px;">“Sit out” skips you for the next round only — you won't be paired, and you can undo it.</div>`;
-  const tapBtn=`<button class="tap-btn ${tapped?'done':''}" onclick="tapHere()">${tapped?"✓ You're here":("I'm at the "+(useColor?esc(sp.name)+" spot":"table"))}</button>`;
+  const tapBtn=`<button class="tap-btn ${tapped?'done':''}" onclick="tapHere()">${tapped?"✓ You're here":("I'm at "+(useColor?("the "+esc(sp.name)+" spot"):("Table "+t.n)))}</button>`;
   if(useColor){
     s.innerHTML=`
       <div class="att-hero color" style="background:${sp.hex};">
@@ -914,7 +916,8 @@ function renderAtt(){
         <div class="att-cd" style="color:${sp.text};opacity:.85" data-cd>${moving?"starting soon":fmt(remaining())+" left"}</div>
       </div>
       <div class="att-members">${membersHtml}</div>
-      ${moving?`<div class="att-center" style="color:var(--muted);padding:12px 0;">Find the <b style="color:var(--ink)">${esc(sp.name.toLowerCase())}</b> spot and grab a seat.</div>`:tapBtn}
+      ${moving?`<div class="att-center" style="color:var(--muted);padding:10px 0 2px;">Find the <b style="color:var(--ink)">${esc(sp.name.toLowerCase())}</b> spot, then tap below.</div>`:""}
+      ${tapBtn}
       ${startersBtn}
       ${moving?attInsta(false):""}
       ${actions}${breakNote}`;
@@ -926,7 +929,8 @@ function renderAtt(){
         <div class="att-cd" data-cd>${moving?"starting soon":fmt(remaining())+" left"}</div>
       </div>
       <div class="att-members">${membersHtml}</div>
-      ${moving?`<div class="att-center" style="color:var(--muted);padding:12px 0;">Find your seat — the host will start the round.</div>`:tapBtn}
+      ${moving?`<div class="att-center" style="color:var(--muted);padding:10px 0 2px;">Find <b style="color:var(--ink)">Table ${t.n}</b>, then tap below.</div>`:""}
+      ${tapBtn}
       ${startersBtn}
       ${moving?attInsta(false):""}
       ${actions}${breakNote}`;
